@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "project-group-2"
+version = "0.1.0"
+description = ""
+authors = ["Volodymyr-Hokh <132125735+Volodymyr-Hokh@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.104.1"
+uvicorn = "^0.24.0.post1"
+sqlalchemy = "^2.0.23"
+alembic = "^1.13.0"
+slowapi = "^0.1.8"
+python-dotenv = "^1.0.0"
+psycopg2 = "^2.9.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
