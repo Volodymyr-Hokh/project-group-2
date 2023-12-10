@@ -4,10 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-
 from src.limiter import limiter
-
-from src.routes import test
+from src.routes import test, images
 
 
 load_dotenv()
@@ -28,3 +26,4 @@ app.add_middleware(
 )
 
 app.include_router(test.router)
+app.include_router(images.router)

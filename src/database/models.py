@@ -35,7 +35,7 @@ class Image(Base):
 class Tag(Base):
     __tablename__ = "tags"
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String, unique=True, index=True)
     created_at = Column(DateTime, default=func.now())
 
 
