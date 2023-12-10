@@ -3,13 +3,13 @@ from fastapi import APIRouter, Request, Depends, HTTPException
 from src.database.db import get_db
 from src.limiter import limiter
 from src.repository import images as images_repository
-from src.schemas import ImageRequest
+from src.schemas import ImageRequest, ImageResponse
 from src.services.auth import auth_service
 
 router = APIRouter(prefix="/images", tags=["images"])
 
 
-@router.post("/")
+@router.post("/", response_model=ImageResponse)
 @limiter.limit(limit_value="10/minute")
 async def add_image(
     request: Request,

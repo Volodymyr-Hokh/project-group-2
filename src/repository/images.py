@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from src.database.models import Image, User
 from src.schemas import ImageRequest
+from src.utils.tags import get_tags_from_description
 
 
 async def add_image(image: ImageRequest, user: User, db: Session):
@@ -16,6 +17,7 @@ async def add_image(image: ImageRequest, user: User, db: Session):
         created_at=datetime.now(),
         updated_at=datetime.now(),
     )
+    image.tags = await get_tags_from_description(image.description, db)
     db.add(image)
     db.commit()
     db.refresh(image)
@@ -42,6 +44,7 @@ async def edit_description(image_id: int, description: str, user: User, db: Sess
     )
     if image:
         image.description = description
+        image.tags = await get_tags_from_description(description, db)
         image.updated_at = datetime.now()
         db.commit()
     return image
