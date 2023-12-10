@@ -52,14 +52,13 @@ class Comment(Base):
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
-    username = Column(String)
-    password = Column(String)
-    email = Column(String)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime)
-    role = Column(Integer, ForeignKey("roles.id"))
-    is_active = Column(Boolean)
-
+    username = Column(String(50))
+    email = Column(String(250), nullable=False, unique=True)
+    password = Column(String(255), nullable=False)
+    confirmed = Column(Boolean, default=False)
+    created_at = Column('crated_at', DateTime, default=func.now())
+    avatar = Column(String(255), nullable=True)
+    refresh_token = Column(String(255), nullable=True)
 
 class Roles(Base):
     __tablename__ = "roles"
