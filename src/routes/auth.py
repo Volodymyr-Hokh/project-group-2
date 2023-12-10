@@ -15,7 +15,7 @@ from fastapi.security import (
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
-from src.schemas import UserModel, UserResponse, TokenModel, RequestEmail
+from src.schemas import UserModel, UserResponse, TokenData, RequestEmail
 from src.repository import users as repository_users
 from src.services.auth import auth_service
 from src.services.emails import send_email
@@ -59,7 +59,7 @@ async def signup(
     }
 
 
-@router.post("/login", response_model=TokenModel)
+@router.post("/login", response_model=TokenData)
 async def login(
     body: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
@@ -69,7 +69,7 @@ async def login(
     :param body: OAuth2PasswordRequestForm containing username (email) and password.
     :param db: The SQLAlchemy Session instance.
 
-    :return: TokenModel containing access and refresh tokens.
+    :return: TokenData containing access and refresh tokens.
     """
     user = await repository_users.get_user_by_email(body.username, db)
     if user is None:
@@ -95,7 +95,7 @@ async def login(
     }
 
 
-@router.get("/refresh_token", response_model=TokenModel)
+@router.get("/refresh_token", response_model=TokenData)
 async def refresh_token(
     credentials: HTTPAuthorizationCredentials = Security(security),
     db: Session = Depends(get_db),
