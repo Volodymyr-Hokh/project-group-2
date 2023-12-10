@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from app.repo.roles import create_roles
-from app.database.db import get_db
+from src.database.crud_roles import create_roles
+from src.database.db import get_db
 
 def initialize_roles_on_startup():
     db: Session = get_db()
