@@ -13,6 +13,7 @@ from src.database.db import get_db
 from src.repository import users as repository_users
 from src.conf.config import settings
 
+
 class Auth:
     """
     Class handling authentication-related operations such as password hashing, token generation, and user verification.
@@ -45,7 +46,9 @@ class Auth:
         """
         return self.pwd_context.hash(password)
 
-    async def create_access_token(self, data: dict, expires_delta: Optional[float] = None):
+    async def create_access_token(
+        self, data: dict, expires_delta: Optional[float] = None
+    ):
         """
         Generate a new access token.
 
@@ -59,11 +62,22 @@ class Auth:
             expire = datetime.utcnow() + timedelta(seconds=expires_delta)
         else:
             expire = datetime.utcnow() + timedelta(minutes=150)
-        to_encode.update({"iat": datetime.utcnow(), "exp": expire, "scope": "access_token", "roles": data.get("roles", [])})
-        encoded_access_token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
+        to_encode.update(
+            {
+                "iat": datetime.utcnow(),
+                "exp": expire,
+                "scope": "access_token",
+                "roles": data.get("roles", []),
+            }
+        )
+        encoded_access_token = jwt.encode(
+            to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM
+        )
         return encoded_access_token
 
-    async def create_refresh_token(self, data: dict, expires_delta: Optional[float] = None):
+    async def create_refresh_token(
+        self, data: dict, expires_delta: Optional[float] = None
+    ):
         """
         Generate a new refresh token.
 
@@ -77,8 +91,12 @@ class Auth:
             expire = datetime.utcnow() + timedelta(seconds=expires_delta)
         else:
             expire = datetime.utcnow() + timedelta(days=7)
-        to_encode.update({"iat": datetime.utcnow(), "exp": expire, "scope": "refresh_token"})
-        encoded_refresh_token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
+        to_encode.update(
+            {"iat": datetime.utcnow(), "exp": expire, "scope": "refresh_token"}
+        )
+        encoded_refresh_token = jwt.encode(
+            to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM
+        )
         return encoded_refresh_token
 
     async def decode_refresh_token(self, refresh_token: str):
@@ -90,15 +108,25 @@ class Auth:
         :return: The decoded email from the token.
         """
         try:
-            payload = jwt.decode(refresh_token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
-            if payload['scope'] == 'refresh_token':
-                email = payload['sub']
+            payload = jwt.decode(
+                refresh_token, self.SECRET_KEY, algorithms=[self.ALGORITHM]
+            )
+            if payload["scope"] == "refresh_token":
+                email = payload["sub"]
                 return email
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid scope for token')
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid scope for token",
+            )
         except JWTError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Could not validate credentials')
-    
-    async def get_current_user(self, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
+
+    async def get_current_user(
+        self, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+    ):
         """
         Get the current authenticated user.
 
@@ -115,7 +143,7 @@ class Auth:
 
         try:
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
-            if payload['scope'] == 'access_token':
+            if payload["scope"] == "access_token":
                 email = payload["sub"]
                 roles = payload.get("roles", [])
                 if email is None:
@@ -134,11 +162,10 @@ class Auth:
             self.r.expire(f"user:{email}", 900)
         else:
             user = pickle.loads(user)
-        
-        
+
         user.roles = roles
         return user
-    
+
     def create_email_token(self, data: dict):
         """
         Generate a token for email verification.
@@ -167,8 +194,10 @@ class Auth:
             return email
         except JWTError as e:
             print(e)
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                detail="Invalid token for email verification")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid token for email verification",
+            )
 
 
 auth_service = Auth()
