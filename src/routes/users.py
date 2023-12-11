@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, UploadFile, File
+from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 import cloudinary
 import cloudinary.uploader
@@ -8,7 +8,8 @@ from src.database.models import User
 from src.repository import users as repository_users
 from src.services.auth import auth_service
 from src.conf.config import settings
-from src.schemas import UserDb
+from src.schemas import UserDb, UserUpdate
+
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -54,4 +55,39 @@ async def update_avatar_user(
         width=250, height=250, crop="fill"
     )
     user = await repository_users.update_avatar(current_user.email, src_url, db)
+    return user
+
+
+@router.get("/{username}", response_model=UserDb)
+async def user_profile(username: str, db: Session = Depends(get_db)):
+    """
+    Get information about a user by their username.
+
+    :param username: The username of the user.
+    :param db: The database session.
+    
+    :return: The user details as a UserDb object.
+    """
+    user = repository_users.get_user_by_username(db, username)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+@router.put("/{username}/edit", response_model=UserDb)
+async def user_profile_edit(user_update: UserUpdate, current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+    """
+    Edit the profile of the currently authenticated user.
+
+    :param user_update: The updated user details.
+    :param current_user: The current authenticated user.
+    :param db: The database session.
+    
+    :return: The updated user details as a UserDb object.
+    """
+    if current_user.username != user_update.username:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    if user_update.password != current_user.password:
+        raise HTTPException(status_code=403, detail="Incorrect password")
+    user_update.password = auth_service.get_password_hash(user_update.new_password)
+    user = repository_users.update_user(db, user_update)
     return user

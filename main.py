@@ -8,7 +8,7 @@ from src.database.startup import initialize_roles_on_startup
 
 from src.limiter import limiter
 
-from src.routes import test, auth, users
+from src.routes import auth, users
 
 load_dotenv()
 

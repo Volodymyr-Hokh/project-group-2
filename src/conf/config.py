@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     postgres_user: str
     postgres_password: str
     postgres_port: int
+    postgres_host: str
     mail_from_name: str
     redis: str = '6379'
 

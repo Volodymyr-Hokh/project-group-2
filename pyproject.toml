@@ -22,7 +22,6 @@ passlib = "^1.7.4"
 python-multipart = "^0.0.6"
 bcrypt = "^4.1.1"
 cloudinary = "^1.37.0"
-psycopg2-binary = "^2.9.9"
 
 
 [build-system]
