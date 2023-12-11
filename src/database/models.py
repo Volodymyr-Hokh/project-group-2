@@ -35,7 +35,7 @@ class Image(Base):
 class Tag(Base):
     __tablename__ = "tags"
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String, unique=True, index=True)
     created_at = Column(DateTime, default=func.now())
 
 
@@ -56,9 +56,10 @@ class User(Base):
     email = Column(String(250), nullable=False, unique=True)
     password = Column(String(255), nullable=False)
     confirmed = Column(Boolean, default=False)
-    created_at = Column('crated_at', DateTime, default=func.now())
+    created_at = Column("crated_at", DateTime, default=func.now())
     avatar = Column(String(255), nullable=True)
     refresh_token = Column(String(255), nullable=True)
+
 
 class Roles(Base):
     __tablename__ = "roles"

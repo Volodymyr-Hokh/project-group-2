@@ -8,7 +8,7 @@ from src.database.startup import initialize_roles_on_startup
 
 from src.limiter import limiter
 
-from src.routes import test, auth, users
+from src.routes import auth, users
 
 load_dotenv()
 
@@ -27,8 +27,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(auth.router, prefix='/api')
-app.include_router(users.router, prefix='/api')
+app.include_router(auth.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
+
 
 @app.get("/")
 def read_root():
