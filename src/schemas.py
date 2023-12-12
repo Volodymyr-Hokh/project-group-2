@@ -1,9 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr
-from datetime import datetime, date
-
-from src.database.models import Tag
+from datetime import datetime
 
 
 class Tag(BaseModel):
@@ -19,7 +17,7 @@ class ImageResponse(BaseModel):
     id: int
     description: str
     url: str
-    tags: list
+    tags: list[Tag]
     created_at: datetime
     updated_at: datetime
 

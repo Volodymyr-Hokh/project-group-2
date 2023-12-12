@@ -2,7 +2,6 @@ import re
 
 from sqlalchemy.orm import Session
 
-from src.database.models import Tag
 from src.repository.tags import get_or_create_tag
 
 

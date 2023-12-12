@@ -13,7 +13,7 @@ async def add_image(image: ImageRequest, user: User, db: Session):
     image = Image(
         description=image.description,
         url=image.url,
-        user_id=1,
+        user_id=user.id,
         created_at=datetime.now(),
         updated_at=datetime.now(),
     )

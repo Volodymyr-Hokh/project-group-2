@@ -20,7 +20,7 @@ async def add_image(
     return await images_repository.add_image(image=body, user=user, db=db)
 
 
-@router.delete("/{image_id}")
+@router.delete("/{image_id}", response_model=ImageResponse)
 @limiter.limit(limit_value="10/minute")
 async def delete_image(
     request: Request,
@@ -34,7 +34,7 @@ async def delete_image(
     return image
 
 
-@router.put("/{image_id}")
+@router.put("/{image_id}", response_model=ImageResponse)
 @limiter.limit(limit_value="10/minute")
 async def edit_description(
     request: Request,
@@ -51,7 +51,7 @@ async def edit_description(
     return image
 
 
-@router.get("/")
+@router.get("/", response_model=list[ImageResponse])
 @limiter.limit(limit_value="10/minute")
 async def get_images(
     request: Request,
@@ -61,7 +61,7 @@ async def get_images(
     return await images_repository.get_images(user=user, db=db)
 
 
-@router.get("/{image_id}")
+@router.get("/{image_id}", response_model=ImageResponse)
 @limiter.limit(limit_value="10/minute")
 async def get_image(
     request: Request,
