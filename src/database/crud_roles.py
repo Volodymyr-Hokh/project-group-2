@@ -1,11 +1,14 @@
 from sqlalchemy.orm import Session
-from src.database.db import get_db  
+from src.database.db import get_db
 from .models import Roles
 
+
 def create_roles():
-    with get_db() as db:  
+    with get_db() as db:
         role_names = ["user", "moderator", "admin"]
         for role_name in role_names:
-            role = Roles(name=role_name)
-            db.add(role)
+            role = db.query(Roles).filter(Roles.name == role_name).first()
+            if not role:
+                role = Roles(name=role_name)
+                db.add(role)
         db.commit()
