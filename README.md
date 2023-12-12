@@ -32,6 +32,7 @@
 
 Для роботи проекта необхідний файл `.env` зі змінними оточення.
 Створіть його з таким вмістом і підставте свої значення:
+
 ```dotenv
 POSTGRES_DB=
 POSTGRES_USER=
@@ -74,7 +75,7 @@ python -m pytest tests/назва_файлу -v
 
 ## Автори проекту
 
-* [Team Lead Volodymyr] (https://github.com/Volodymyr-Hokh)
-* [Scrum Master Viktoriia] (https://github.com/Nilinz)
-* [Developer Danil]  (https://github.com/Pelmenoff)
-* [Developer Vladyslav] (https://github.com/Vlad96Kir)
+* Team Lead [**Volodymyr**] (https://github.com/Volodymyr-Hokh)
+* Scrum Master [**Viktoriia**] (https://github.com/Nilinz)
+* Developer [**Danil**]  (https://github.com/Pelmenoff)
+* Developer [**Vladyslav**] (https://github.com/Vlad96Kir)
