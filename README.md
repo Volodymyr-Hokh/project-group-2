@@ -68,11 +68,11 @@ docker-compose up -d
 
 * Запуск тестів:  
 ```
-python -m pytest tests/test_route_auth.py -v
+python -m pytest tests/назва_файлу -v
 ```
 
 
-## Контрибутори в проект
+## Автори проекту
 
 * [Team Lead Volodymyr] (https://github.com/Volodymyr-Hokh)
 * [Scrum Master Viktoriia] (https://github.com/Nilinz)
