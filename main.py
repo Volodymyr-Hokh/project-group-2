@@ -29,8 +29,4 @@ app.add_middleware(
 )
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
-
-
-app.include_router(images.router)
-app.include_router(auth.router)
-app.include_router(users.router)
+app.include_router(images.router, prefix="/api")
