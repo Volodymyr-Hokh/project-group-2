@@ -75,7 +75,7 @@ python -m pytest tests/назва_файлу -v
 
 ##  :purple_circle: Автори проекту 
 
-* Team Lead [**Volodymyr**] (https://github.com/Volodymyr-Hokh)
-* Scrum Master [**Viktoriia**] (https://github.com/Nilinz)
-* Developer [**Danil**]  (https://github.com/Pelmenoff)
-* Developer [**Vladyslav**] (https://github.com/Vlad96Kir)
+* Team Lead [Volodymyr](https://github.com/Volodymyr-Hokh)
+* Scrum Master [Viktoriia](https://github.com/Nilinz)
+* Developer [Danil](https://github.com/Pelmenoff)
+* Developer [Vladyslav](https://github.com/Vlad96Kir)
