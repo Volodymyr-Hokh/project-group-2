@@ -15,6 +15,17 @@ async def get_user_by_email(email: str, db: Session) -> User:
     """
     return db.query(User).filter(User.email == email).first()
 
+def get_user_by_username(db: Session, username: str) -> User:
+    """
+    Retrieve a user from the database based on their username.
+
+    :param username: The username of the user to be retrieved.
+    :param db: The SQLAlchemy Session instance.
+
+    :return: The User object if found, otherwise None.
+    """
+    return db.query(User).filter(User.username == username).first()
+
 async def create_user(body: UserModel, db: Session) -> User:
     """
     Create a new user and store it in the database.

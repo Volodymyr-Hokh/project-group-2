@@ -1,7 +1,4 @@
-from typing import List, Optional
-
 from pydantic import BaseModel
-
 from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime, date
@@ -66,3 +63,10 @@ class TokenData(BaseModel):
     username: str | None = None
     email: str | None = None
     roles: List[str] = []
+
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = Field(min_length=5, max_length=16)
+    email: Optional[EmailStr]
+    password: Optional[str] = Field(min_length=6, max_length=10)
+    new_password: Optional[str] = Field(min_length=6, max_length=10)
