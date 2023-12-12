@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, HTTPException, Depends, status, Security
+from fastapi import APIRouter, HTTPException, Depends, status, Security, BackgroundTasks, Request
 from fastapi.security import (
     OAuth2PasswordRequestForm,
     HTTPAuthorizationCredentials,
@@ -9,7 +9,7 @@ from fastapi.security import (
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
-from src.schemas import UserModel, UserResponse, Token
+from src.schemas import UserModel, UserResponse, Token, RequestEmail
 from src.repository import users as repository_users
 from src.services.auth import auth_service
 
@@ -77,3 +77,53 @@ async def refresh_token(
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
+
+
+@router.get("/confirmed_email/{token}")
+async def confirmed_email(token: str, db: Session = Depends(get_db)):
+    """
+    Confirm user's email using the confirmation token.
+
+    :param token: The confirmation token sent via email.
+    :param db: The SQLAlchemy Session instance.
+
+    :return: A message confirming or rejecting the email confirmation.
+    """
+    email = await auth_service.get_email_from_token(token)
+    user = await repository_users.get_user_by_email(email, db)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Verification error"
+        )
+    if user.confirmed:
+        return {"message": "Your email is already confirmed"}
+    await repository_users.confirmed_email(email, db)
+    return {"message": "Email confirmed"}
+
+
+@router.post("/request_email")
+async def request_email(
+    body: RequestEmail,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Send a confirmation email for email verification or re-send the confirmation email.
+
+    :param body: RequestEmail containing the email address.
+    :param background_tasks: BackgroundTasks instance for handling asynchronous tasks.
+    :param request: FastAPI Request instance.
+    :param db: The SQLAlchemy Session instance.
+
+    :return: A message instructing the user to check their email for confirmation.
+    """
+    user = await repository_users.get_user_by_email(body.email, db)
+
+    if user.confirmed:
+        return {"message": "Your email is already confirmed"}
+    if user:
+        background_tasks.add_task(
+            send_email, user.email, user.username, request.base_url
+        )
+    return {"message": "Check your email for confirmation."}
