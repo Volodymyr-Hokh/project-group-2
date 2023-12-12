@@ -13,10 +13,9 @@ load_dotenv(dotenv_path=env_path)
 conf = ConnectionConfig(
     MAIL_USERNAME=os.getenv('MAIL_USERNAME'),
     MAIL_PASSWORD=os.getenv('MAIL_PASSWORD'),
-    MAIL_FROM=os.getenv('MAIL_FROM'),
     MAIL_PORT=os.getenv('MAIL_PORT', default=465),
     MAIL_SERVER=os.getenv('MAIL_SERVER', default='smtp.meta.ua'),
-    MAIL_FROM_NAME=os.getenv('MAIL_FROM_NAME', default='Example email'),
+    MAIL_FROM=os.getenv('MAIL_FROM'),
     MAIL_STARTTLS=os.getenv('MAIL_STARTTLS', default=False),
     MAIL_SSL_TLS=os.getenv('MAIL_SSL_TLS', default=True),
     USE_CREDENTIALS=os.getenv('USE_CREDENTIALS', default=True),
