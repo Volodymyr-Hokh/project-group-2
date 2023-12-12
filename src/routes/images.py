@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File
 
 from src.database.db import get_db
 from src.limiter import limiter
 from src.repository import images as images_repository
-from src.schemas import ImageRequest, ImageResponse
+from src.schemas import ImageResponse
 from src.services.auth import auth_service
 
 router = APIRouter(prefix="/images", tags=["images"])
@@ -13,11 +13,15 @@ router = APIRouter(prefix="/images", tags=["images"])
 @limiter.limit(limit_value="10/minute")
 async def add_image(
     request: Request,
-    body: ImageRequest,
+    file: UploadFile = File(...),
+    description: str = "",
     db=Depends(get_db),
     user=Depends(auth_service.get_current_user),
 ):
-    return await images_repository.add_image(image=body, user=user, db=db)
+    url = await images_repository.upload_image(file=file)
+    return await images_repository.add_image(
+        image_url=url, description=description, user=user, db=db
+    )
 
 
 @router.delete("/{image_id}", response_model=ImageResponse)

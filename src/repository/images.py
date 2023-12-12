@@ -1,18 +1,38 @@
 from datetime import datetime
 from typing import List
+from uuid import uuid4
 
+import cloudinary
+import cloudinary.uploader
 from sqlalchemy import text, and_
 from sqlalchemy.orm import Session
 
+from src.conf.config import settings
 from src.database.models import Image, User
-from src.schemas import ImageRequest
 from src.utils.tags import get_tags_from_description
 
 
-async def add_image(image: ImageRequest, user: User, db: Session):
+async def upload_image(file):
+    cloudinary.config(
+        cloud_name=settings.cloudinary_name,
+        api_key=settings.cloudinary_api_key,
+        api_secret=settings.cloudinary_api_secret,
+        secure=True,
+    )
+    unique_filename = str(uuid4())
+    r = cloudinary.uploader.upload(
+        file.file, public_id=f"KillerInstagram/{unique_filename}", overwrite=True
+    )
+    src_url = cloudinary.CloudinaryImage(
+        f"KillerInstagram/{unique_filename}"
+    ).build_url(version=r.get("version"))
+    return src_url
+
+
+async def add_image(image_url: str, description: str, user: User, db: Session):
     image = Image(
-        description=image.description,
-        url=image.url,
+        url=image_url,
+        description=description,
         user_id=user.id,
         created_at=datetime.now(),
         updated_at=datetime.now(),

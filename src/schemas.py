@@ -8,11 +8,6 @@ class Tag(BaseModel):
     name: str
 
 
-class ImageRequest(BaseModel):
-    description: str
-    url: str
-
-
 class ImageResponse(BaseModel):
     id: int
     description: str
