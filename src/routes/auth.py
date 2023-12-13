@@ -22,6 +22,14 @@ security = HTTPBearer()
     "/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
 async def signup(body: UserModel, db: Session = Depends(get_db)):
+    """
+    User registration.
+
+    :param body: UserModel containing username, email and password.
+    :param db: The SQLAlchemy Session instance.
+
+    :return: A message confirming or rejecting user's registration.
+    """
     exist_user = await repository_users.get_user_by_email(body.email, db)
     if exist_user:
         raise HTTPException(
@@ -36,6 +44,15 @@ async def signup(body: UserModel, db: Session = Depends(get_db)):
 async def login(
     body: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
+    """
+    User's authorization via JWT token.
+    
+    :param body: OAuth2PasswordRequestForm containing username and password fields as form data.
+    :param db: The SQLAlchemy Session instance.
+
+
+    :return: Generated access token, refresh token and token type.
+    """
     user = await repository_users.get_user_by_email(body.username, db)
     if user is None:
         raise HTTPException(
@@ -61,6 +78,15 @@ async def refresh_token(
     credentials: HTTPAuthorizationCredentials = Security(security),
     db: Session = Depends(get_db),
 ):
+    """
+    Refreshing token.
+
+    :param credentials: Security endpoind to access the token.
+    :param db: The SQLAlchemy Session instance.
+
+   
+    :return: Updated access token, refresh token and token type.
+    """
     token = credentials.credentials
     email = await auth_service.decode_refresh_token(token)
     user = await repository_users.get_user_by_email(email, db)

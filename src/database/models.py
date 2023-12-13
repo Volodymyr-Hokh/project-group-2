@@ -9,7 +9,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.orm import declarative_base, relationship
-
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -71,3 +71,13 @@ class Roles(Base):
     name = Column(String)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
+
+class Comment(Base):
+    __tablename__ = 'comments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(String)
+    user_id = Column(Integer)
+    photo_id = Column(Integer)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)

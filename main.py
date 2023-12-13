@@ -12,7 +12,7 @@ from src.routes import auth, users, images
 
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI(title='PhotoShare')
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 

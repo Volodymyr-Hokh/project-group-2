@@ -1,8 +1,8 @@
 """Init
 
-Revision ID: 91da35268c52
+Revision ID: 6674b87c0f8f
 Revises: 
-Create Date: 2023-12-08 18:03:20.544568
+Create Date: 2023-12-12 17:31:33.561895
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '91da35268c52'
+revision: str = '6674b87c0f8f'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -33,17 +33,18 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_tags_name'), 'tags', ['name'], unique=True)
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('username', sa.String(), nullable=True),
-    sa.Column('password', sa.String(), nullable=True),
-    sa.Column('email', sa.String(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.Column('role', sa.Integer(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['role'], ['roles.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.Column('username', sa.String(length=50), nullable=True),
+    sa.Column('email', sa.String(length=250), nullable=False),
+    sa.Column('password', sa.String(length=255), nullable=False),
+    sa.Column('confirmed', sa.Boolean(), nullable=True),
+    sa.Column('crated_at', sa.DateTime(), nullable=True),
+    sa.Column('avatar', sa.String(length=255), nullable=True),
+    sa.Column('refresh_token', sa.String(length=255), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('email')
     )
     op.create_table('images',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -68,9 +69,9 @@ def upgrade() -> None:
     )
     op.create_table('image_m2m_tag',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('note', sa.Integer(), nullable=True),
+    sa.Column('image', sa.Integer(), nullable=True),
     sa.Column('tag', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['note'], ['images.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['image'], ['images.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['tag'], ['tags.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -83,6 +84,7 @@ def downgrade() -> None:
     op.drop_table('comments')
     op.drop_table('images')
     op.drop_table('users')
+    op.drop_index(op.f('ix_tags_name'), table_name='tags')
     op.drop_table('tags')
     op.drop_table('roles')
     # ### end Alembic commands ###
