@@ -33,6 +33,9 @@ async def upload_image(file):
 
 
 async def add_image(image_url: str, description: str, user: User, db: Session):
+    """
+
+    """
     image = Image(
         url=image_url,
         description=description,
@@ -48,6 +51,9 @@ async def add_image(image_url: str, description: str, user: User, db: Session):
 
 
 async def delete_image(image_id: int, user: User, db: Session):
+    """
+    
+    """
     image = (
         db.query(Image)
         .filter(and_(Image.id == image_id, Image.user_id == user.id))
@@ -60,6 +66,9 @@ async def delete_image(image_id: int, user: User, db: Session):
 
 
 async def edit_description(image_id: int, description: str, user: User, db: Session):
+    """
+    
+    """
     image = (
         db.query(Image)
         .filter(and_(Image.id == image_id, Image.user_id == user.id))
@@ -74,10 +83,16 @@ async def edit_description(image_id: int, description: str, user: User, db: Sess
 
 
 async def get_images(user: User, db: Session):
+    """
+
+    """
     return db.query(Image).filter(Image.user_id == user.id).all()
 
 
 async def get_image(image_id: int, user: User, db: Session):
+    """
+    
+    """
     return (
         db.query(Image)
         .filter(and_(Image.id == image_id, Image.user_id == user.id))
