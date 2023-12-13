@@ -73,7 +73,9 @@ docker-compose up -d
 ```
 python -m pytest tests/назва_файлу -v
 ```
+## Swagger та Sphinx документація
 
+http://127.0.0.1:8000/docs
 
 ##  :purple_circle: **Автори проекту** 
 

@@ -13,6 +13,9 @@ from src.utils.tags import get_tags_from_description
 
 
 async def upload_image(file):
+    """
+    
+    """
     cloudinary.config(
         cloud_name=settings.cloudinary_name,
         api_key=settings.cloudinary_api_key,
