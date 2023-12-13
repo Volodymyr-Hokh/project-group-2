@@ -21,7 +21,6 @@ security = HTTPBearer()
 @router.post(
     "/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
-
 async def signup(body: UserModel, db: Session = Depends(get_db)):
     """
     User registration.
