@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File
 from fastapi.responses import Response
-from fastapi.templating import Jinja2Templates
 
 from src.database.db import get_db
 from src.limiter import limiter
@@ -10,7 +9,6 @@ from src.services.auth import auth_service
 from src.services.images import image_service
 
 router = APIRouter(prefix="/images", tags=["images"])
-# templates = Jinja2Templates(directory="src/services/templates/qr_codes")
 
 
 @router.post("/", response_model=ImageResponse)
