@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File
+from fastapi.responses import Response
 
 from src.database.db import get_db
 from src.limiter import limiter
 from src.repository import images as images_repository
 from src.schemas import ImageResponse
 from src.services.auth import auth_service
+from src.services.images import image_service
 
 router = APIRouter(prefix="/images", tags=["images"])
 
@@ -19,7 +21,7 @@ async def add_image(
     user=Depends(auth_service.get_current_user),
 ):
     """
-    Adding image to db.    
+    Adding image to db.
 
     :param request: FastAPI Request instance.
     :param file: A file uploaded in a request.
@@ -29,9 +31,13 @@ async def add_image(
 
     :return:
     """
-    url = await images_repository.upload_image(file=file)
+    image_info = await image_service.upload_image(file=file)
     return await images_repository.add_image(
-        image_url=url, description=description, user=user, db=db
+        image_url=image_info["url"],
+        public_id=image_info["public_id"],
+        description=description,
+        user=user,
+        db=db,
     )
 
 
@@ -97,7 +103,7 @@ async def get_images(
 ):
     """
     Gets images by users_id.
-    
+
     :param request: FastAPI Request instance.
     :param db: The SQLAlchemy Session instance.
     :param user: Get the current authenticated user.
@@ -117,7 +123,7 @@ async def get_image(
 ):
     """
     Get image by user_id and image_id.
-    
+
     :param request: FastAPI Request instance.
     :param image_id: Image id number.
     :param db: The SQLAlchemy Session instance.
@@ -129,3 +135,19 @@ async def get_image(
     if not image:
         raise HTTPException(status_code=404, detail="Image not found")
     return image
+
+
+@router.post("/generate_qr_code")
+@limiter.limit(limit_value="10/minute")
+async def generate_qr_code(
+    image_url: str, request: Request, user=Depends(auth_service.get_current_user)
+):
+    """ """
+    if user:
+        qr_code = await image_service.generate_qr_code(image_url=image_url)
+        return Response(
+            content=qr_code,
+            media_type="image/png",
+            headers={"content-disposition": "inline"},
+            status_code=200,
+        )

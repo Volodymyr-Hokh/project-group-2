@@ -37,6 +37,7 @@ class Image(Base):
     __tablename__ = "images"
     id = Column(Integer, primary_key=True)
     description = Column(String)
+    public_id = Column(String)
     url = Column(String)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
