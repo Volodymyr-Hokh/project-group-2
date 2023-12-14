@@ -16,6 +16,10 @@ class ImageResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+class UserRole(str):  
+    admin = "admin"
+    moderator = "moderator"
+    user = "user"
 
 class UserModel(BaseModel):
     username: str = Field(min_length=5, max_length=16)
@@ -25,10 +29,12 @@ class UserModel(BaseModel):
 
 class UserDb(BaseModel):
     id: int
+    confirmed: bool
     username: str
     email: str
     created_at: datetime
     avatar: str
+    role: str
 
     class Config:
         orm_mode = True
