@@ -9,7 +9,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.orm import declarative_base, relationship
-from enum import Enum
+
 
 Base = declarative_base()
 
@@ -27,6 +27,11 @@ user_roles = Table(
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('role_id', Integer, ForeignKey('roles.id'))
 )
+
+class UserRole(str):  
+    admin = "admin"
+    moderator = "moderator"
+    user = "user"
 
 class Image(Base):
     __tablename__ = "images"
@@ -58,11 +63,6 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     image_id = Column(Integer, ForeignKey("images.id"))
 
-class UserRole(str, Enum):
-    admin = "admin"
-    moderator = "moderator"
-    user = "user"
-
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
@@ -70,12 +70,13 @@ class User(Base):
     email = Column(String(250), nullable=False, unique=True)
     password = Column(String(255), nullable=False)
     confirmed = Column(Boolean, default=False)
-    created_at = Column("crated_at", DateTime, default=func.now())
+    created_at = Column("created_at", DateTime, default=func.now())
     avatar = Column(String(255), nullable=True)
     refresh_token = Column(String(255), nullable=True)
-    roles = relationship('Roles', secondary=user_roles, back_populates='users')
-    role = Column(String, Enum(UserRole))
 
+    
+    role = Column(String, name='user_role', default=UserRole.user, nullable=False)
+    roles = relationship('Roles', secondary=user_roles, back_populates='users')
 
 class Roles(Base):
     __tablename__ = "roles"
