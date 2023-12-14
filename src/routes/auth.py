@@ -11,12 +11,12 @@ from sqlalchemy.orm import Session
 from src.database.db import get_db
 from src.schemas import UserModel, UserResponse, Token, RequestEmail
 from src.repository import users as repository_users
-from src.services.auth import auth_service
+from src.services.auth import Auth
 from src.services.emails import send_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
-
+auth_service = Auth()
 
 @router.post(
     "/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED
@@ -72,6 +72,18 @@ async def login(
         "token_type": "bearer",
     }
 
+@router.get("/current_user_roles")
+async def get_roles_of_current_user(
+    roles: list[str] = Depends(auth_service.get_current_user_role)
+):
+    """
+    Get the roles of the current authenticated user.
+
+    :param roles: The roles of the current authenticated user.
+
+    :return: The roles of the current authenticated user.
+    """
+    return {"roles": roles}
 
 @router.get("/refresh_token", response_model=Token)
 async def refresh_token(
