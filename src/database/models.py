@@ -9,7 +9,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.orm import declarative_base, relationship
-
+from enum import Enum
 
 Base = declarative_base()
 
@@ -21,6 +21,12 @@ image_m2m_tag = Table(
     Column("tag", Integer, ForeignKey("tags.id", ondelete="CASCADE")),
 )
 
+user_roles = Table(
+    'user_roles',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('role_id', Integer, ForeignKey('roles.id'))
+)
 
 class Image(Base):
     __tablename__ = "images"
@@ -52,6 +58,10 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     image_id = Column(Integer, ForeignKey("images.id"))
 
+class UserRole(str, Enum):
+    admin = "admin"
+    moderator = "moderator"
+    user = "user"
 
 class User(Base):
     __tablename__ = "users"
@@ -63,6 +73,8 @@ class User(Base):
     created_at = Column("crated_at", DateTime, default=func.now())
     avatar = Column(String(255), nullable=True)
     refresh_token = Column(String(255), nullable=True)
+    roles = relationship('Roles', secondary=user_roles, back_populates='users')
+    role = Column(String, Enum(UserRole))
 
 
 class Roles(Base):
@@ -71,3 +83,4 @@ class Roles(Base):
     name = Column(String)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
+    users = relationship('User', secondary=user_roles, back_populates='roles')
