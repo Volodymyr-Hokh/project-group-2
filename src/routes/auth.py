@@ -54,9 +54,9 @@ async def login(
     :return: Generated access token, refresh token and token type.
     """
     user = await repository_users.get_user_by_email(body.username, db)
-    if user is None:
+    if user is None or not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or account is blocked"
         )
     if not auth_service.verify_password(body.password, user.password):
         raise HTTPException(

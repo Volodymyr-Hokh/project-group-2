@@ -44,7 +44,10 @@ class UserResponse(BaseModel):
     user: UserDb
     detail: str = "User successfully created"
 
-
+class UserResponseProfile(BaseModel):
+    user: UserDb
+    image_count: int = 0
+    last_image_id: Optional[int] = None
 class RoleModel(BaseModel):
     name: str
 
