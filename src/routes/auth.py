@@ -13,7 +13,7 @@ from src.schemas import UserModel, UserResponse, Token, RequestEmail
 from src.repository import users as repository_users
 from src.services.auth import Auth
 from src.services.emails import send_email
-from src.database import crud_users
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
@@ -59,9 +59,9 @@ async def login(
     :return: Generated access token, refresh token and token type.
     """
     user = await repository_users.get_user_by_email(body.username, db)
-    if user is None:
+    if user is None or not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or account is blocked"
         )
     if not auth_service.verify_password(body.password, user.password):
         raise HTTPException(
@@ -77,18 +77,22 @@ async def login(
         "token_type": "bearer",
     }
 
+# @router.get("/current_user_roles")
+# async def get_roles_of_current_user(
+#     user=Depends(auth_service.get_current_user)
+# ):
+#     """
+#     Get the roles of the current authenticated user.
+
+#     :param roles: The roles of the current authenticated user.
+
+#     :return: The roles of the current authenticated user.
+#     """
+#     return {"roles": user.roles}
+
 @router.get("/current_user_roles")
-async def get_roles_of_current_user(
-    roles: list[str] = Depends(auth_service.get_current_user_role)
-):
-    """
-    Get the roles of the current authenticated user.
-
-    :param roles: The roles of the current authenticated user.
-
-    :return: The roles of the current authenticated user.
-    """
-    return {"roles": roles}
+async def get_user_roles(roles: List[str] = Depends(auth_service.get_roles_of_current_user)):
+    return roles
 
 @router.get("/refresh_token", response_model=Token)
 async def refresh_token(

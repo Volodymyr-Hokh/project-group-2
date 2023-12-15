@@ -125,6 +125,49 @@ class Auth:
                 detail="Could not validate credentials",
             )
 
+    # async def get_current_user(
+    #     self, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+    # ):
+    #     """
+    #     Get the current authenticated user.
+
+    #     :param token: The access token for authentication.
+    #     :param db: The SQLAlchemy Session instance.
+
+    #     :return: The current authenticated user.
+    #     """
+    #     credentials_exception = HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail="Could not validate credentials",
+    #         headers={"WWW-Authenticate": "Bearer"},
+    #     )
+
+    #     try:
+    #         payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
+    #         if payload["scope"] == "access_token":
+    #             email = payload["sub"]
+    #             roles = payload.get("roles", [])
+    #             if email is None:
+    #                 raise credentials_exception
+    #         else:
+    #             raise credentials_exception
+    #     except JWTError as e:
+    #         raise credentials_exception
+
+    #     user = self.r.get(f"user:{email}")
+    #     if user is None:
+    #         user = await repository_users.get_user_by_email(email, db)
+    #         if user is None:
+    #             raise credentials_exception
+    #         self.r.set(f"user:{email}", pickle.dumps(user))
+    #         self.r.expire(f"user:{email}", 900)
+    #     else:
+    #         user = pickle.loads(user)
+
+    #     user.roles = roles
+    #     return user
+
+
     async def get_current_user(
         self, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
     ):
@@ -154,30 +197,47 @@ class Auth:
         except JWTError as e:
             raise credentials_exception
 
-        user = self.r.get(f"user:{email}")
+        # Get user directly from the database instead of Redis cache
+        user = await repository_users.get_user_by_email(email, db)
         if user is None:
-            user = await repository_users.get_user_by_email(email, db)
-            if user is None:
-                raise credentials_exception
-            self.r.set(f"user:{email}", pickle.dumps(user))
-            self.r.expire(f"user:{email}", 900)
-        else:
-            user = pickle.loads(user)
+            raise credentials_exception
 
-        user.roles = roles
+        # Update the roles directly from the database
+        roles_result = db.query(Roles).join(user_roles).filter(user_roles.c.user_id == user.id).first()
+        
+        # Use the correct field for role names, replace 'name' with the actual field name
+        user.roles = [role.name for role in roles_result] if roles_result else ['user']
+
         return user
 
 
-    async def get_current_user_role(self, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+
+    # async def get_current_user_role(self, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    #     """
+    #     Get the roles of the current authenticated user.
+
+    #     :param current_user: The current authenticated user.
+
+    #     :return: The roles of the current authenticated user.
+    #     """
+    #     roles = db.query(Roles).join(user_roles).filter(user_roles.c.user_id == current_user.id).first()
+    #     return roles
+
+    async def get_roles_of_current_user(
+        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+    ):
         """
         Get the roles of the current authenticated user.
 
+        :param token: The access token for authentication.
+        :param db: The SQLAlchemy Session instance.
         :param current_user: The current authenticated user.
 
         :return: The roles of the current authenticated user.
         """
-        roles = db.query(Roles).join(user_roles).filter(user_roles.c.user_id == current_user.id).first()
-        return roles
+        return current_user.roles
 
 
     def create_email_token(self, data: dict):

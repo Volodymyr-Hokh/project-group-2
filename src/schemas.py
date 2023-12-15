@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
-
+from enum import Enum
 
 class Tag(BaseModel):
     name: str
@@ -16,10 +16,6 @@ class ImageResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-class UserRole(str):  
-    admin = "admin"
-    moderator = "moderator"
-    user = "user"
 
 class UserModel(BaseModel):
     username: str = Field(min_length=5, max_length=16)
@@ -39,14 +35,14 @@ class UserDb(BaseModel):
     class Config:
         orm_mode = True
 
-
 class UserResponse(BaseModel):
     user: UserDb
     detail: str = "User successfully created"
 
-
-class RoleModel(BaseModel):
-    name: str
+class UserResponseProfile(BaseModel):
+    user: UserDb
+    image_count: int = 0
+    last_image_id: Optional[int] = None
 
 
 class RequestEmail(BaseModel):
@@ -61,7 +57,7 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: str | None = None
     email: str | None = None
-    roles: List[str] = []
+    role: str
 
 
 class UserUpdate(BaseModel):
@@ -69,4 +65,5 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr]
     password: Optional[str] = Field(min_length=6, max_length=10)
     new_password: Optional[str] = Field(min_length=6, max_length=10)
-    role: Optional[UserRole] 
+    role: Optional[str] 
+

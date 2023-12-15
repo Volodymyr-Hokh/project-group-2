@@ -18,7 +18,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 origins = ["http://localhost:3000"]
 
+
 initialize_roles_on_startup()
+
 
 app.add_middleware(
     CORSMiddleware,
