@@ -1,11 +1,15 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
+import cloudinary
+import cloudinary.uploader
 
 from src.database.db import get_db
-from src.database.models import User
-from src.schemas import UserUpdate, UserResponse, UserRole
+from src.database.models import User, Image
+from src.schemas import UserUpdate, UserResponse, UserRole, UserResponseProfile, UserDb
 from src.repository import users as repository_users
 from src.services.auth import auth_service
+from src.conf.config import settings
 from src.database.crud_users import update_user_role
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -34,7 +38,6 @@ async def update_user_role(
             detail="You do not have permission to update user roles."
         )
 
-    # Виправлено помилку: 'updated_user' було задекларовано всередині if, тому його не було видно поза межами блока if.
     updated_user = await update_user_role(user_id, role_update, db)
     
     return {"user": updated_user, "detail": "User role updated successfully"}
