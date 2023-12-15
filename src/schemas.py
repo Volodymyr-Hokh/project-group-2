@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
-from enum import Enum
+
 
 class Tag(BaseModel):
     name: str
@@ -55,9 +55,9 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: str | None = None
-    email: str | None = None
-    role: str
+    username: Optional[str]
+    email: Optional[str]
+    role: Optional[str]
 
 
 class UserUpdate(BaseModel):
@@ -67,3 +67,10 @@ class UserUpdate(BaseModel):
     new_password: Optional[str] = Field(min_length=6, max_length=10)
     role: Optional[str] 
 
+class CommentResponse(BaseModel):
+    id: int
+    text: str
+    created_at: datetime
+    updated_at: datetime
+    user_id: int
+    image_id: int

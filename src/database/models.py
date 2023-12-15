@@ -32,7 +32,7 @@ class Image(Base):
     updated_at = Column(DateTime)
     user_id = Column(Integer, ForeignKey("users.id"))
     tags = relationship("Tag", secondary=image_m2m_tag, backref="images")
-
+    comments = relationship("Comment", backref="images")
 
 class Tag(Base):
     __tablename__ = "tags"
@@ -52,6 +52,12 @@ class Comment(Base):
     updated_at = Column(DateTime)
     user_id = Column(Integer, ForeignKey("users.id"))
     image_id = Column(Integer, ForeignKey("images.id"))
+
+class UserRole(str, Enum):
+    admin = "admin"
+    user = "user"
+    moderator = "moderator"
+
 
 class User(Base):
     __tablename__ = "users"

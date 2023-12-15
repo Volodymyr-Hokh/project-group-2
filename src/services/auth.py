@@ -9,7 +9,8 @@ from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-from src.database.models import User, user_roles, Roles
+from src.database.models import User
+from src.schemas import  TokenData
 from src.database.db import get_db
 from src.repository import users as repository_users
 from src.conf.config import settings
@@ -49,7 +50,7 @@ class Auth:
 
     async def create_access_token(
         self, data: dict, expires_delta: Optional[float] = None
-    ):
+    ) -> str:
         """
         Generate a new access token.
 
@@ -68,7 +69,7 @@ class Auth:
                 "iat": datetime.utcnow(),
                 "exp": expire,
                 "scope": "access_token",
-                "roles": data.get("roles", []),
+                "role": data.get("role"), 
             }
         )
         encoded_access_token = jwt.encode(
@@ -78,7 +79,7 @@ class Auth:
 
     async def create_refresh_token(
         self, data: dict, expires_delta: Optional[float] = None
-    ):
+    ) -> str:
         """
         Generate a new refresh token.
 
@@ -93,7 +94,7 @@ class Auth:
         else:
             expire = datetime.utcnow() + timedelta(days=7)
         to_encode.update(
-            {"iat": datetime.utcnow(), "exp": expire, "scope": "refresh_token", "roles": data.get("roles", [])}
+            {"iat": datetime.utcnow(), "exp": expire, "scope": "refresh_token", "roles": data.get("role")}
         )
         encoded_refresh_token = jwt.encode(
             to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM
@@ -125,52 +126,9 @@ class Auth:
                 detail="Could not validate credentials",
             )
 
-    # async def get_current_user(
-    #     self, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-    # ):
-    #     """
-    #     Get the current authenticated user.
-
-    #     :param token: The access token for authentication.
-    #     :param db: The SQLAlchemy Session instance.
-
-    #     :return: The current authenticated user.
-    #     """
-    #     credentials_exception = HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail="Could not validate credentials",
-    #         headers={"WWW-Authenticate": "Bearer"},
-    #     )
-
-    #     try:
-    #         payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
-    #         if payload["scope"] == "access_token":
-    #             email = payload["sub"]
-    #             roles = payload.get("roles", [])
-    #             if email is None:
-    #                 raise credentials_exception
-    #         else:
-    #             raise credentials_exception
-    #     except JWTError as e:
-    #         raise credentials_exception
-
-    #     user = self.r.get(f"user:{email}")
-    #     if user is None:
-    #         user = await repository_users.get_user_by_email(email, db)
-    #         if user is None:
-    #             raise credentials_exception
-    #         self.r.set(f"user:{email}", pickle.dumps(user))
-    #         self.r.expire(f"user:{email}", 900)
-    #     else:
-    #         user = pickle.loads(user)
-
-    #     user.roles = roles
-    #     return user
-
-
     async def get_current_user(
         self, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-    ):
+    ) -> User:
         """
         Get the current authenticated user.
 
@@ -189,7 +147,7 @@ class Auth:
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
             if payload["scope"] == "access_token":
                 email = payload["sub"]
-                roles = payload.get("roles", [])
+                role = payload.get("role")
                 if email is None:
                     raise credentials_exception
             else:
@@ -197,48 +155,81 @@ class Auth:
         except JWTError as e:
             raise credentials_exception
 
-        # Get user directly from the database instead of Redis cache
-        user = await repository_users.get_user_by_email(email, db)
+        user = self.r.get(f"user:{email}")
         if user is None:
-            raise credentials_exception
+            user = await repository_users.get_user_by_email(email, db)
+            if user is None:
+                raise credentials_exception
+            self.r.set(f"user:{email}", pickle.dumps(user))
+            self.r.expire(f"user:{email}", 900)
+        else:
+            user = pickle.loads(user)
 
-        # Update the roles directly from the database
-        roles_result = db.query(Roles).join(user_roles).filter(user_roles.c.user_id == user.id).first()
-        
-        # Use the correct field for role names, replace 'name' with the actual field name
-        user.roles = [role.name for role in roles_result] if roles_result else ['user']
-
+        user.role = role
         return user
 
-
-
-    # async def get_current_user_role(self, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # async def get_roles_of_current_user(
+    #     token: str = Depends(oauth2_scheme),
+    #     db: Session = Depends(get_db),
+    #     current_user: User = Depends(get_current_user)
+    # ):
     #     """
     #     Get the roles of the current authenticated user.
 
+    #     :param token: The access token for authentication.
+    #     :param db: The SQLAlchemy Session instance.
     #     :param current_user: The current authenticated user.
 
     #     :return: The roles of the current authenticated user.
     #     """
-    #     roles = db.query(Roles).join(user_roles).filter(user_roles.c.user_id == current_user.id).first()
-    #     return roles
+    #     return current_user.role
 
-    async def get_roles_of_current_user(
-        token: str = Depends(oauth2_scheme),
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+    async def update_user_role(
+        self, new_role: str, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
     ):
         """
-        Get the roles of the current authenticated user.
+        Update the role of the current authenticated user.
 
+        :param new_role: The new role to assign to the user.
         :param token: The access token for authentication.
         :param db: The SQLAlchemy Session instance.
-        :param current_user: The current authenticated user.
 
-        :return: The roles of the current authenticated user.
+        :return: The updated TokenData object.
         """
-        return current_user.roles
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
+        try:
+            payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
+            if payload["scope"] == "access_token":
+                email = payload["sub"]
+                if email is None:
+                    raise credentials_exception
+            else:
+                raise credentials_exception
+        except JWTError as e:
+            raise credentials_exception
+
+        user = self.r.get(f"user:{email}")
+        if user is None:
+            user = await repository_users.get_user_by_email(email, db)
+            if user is None:
+                raise credentials_exception
+            self.r.set(f"user:{email}", pickle.dumps(user))
+            self.r.expire(f"user:{email}", 900)
+        else:
+            user = pickle.loads(user)
+
+        
+        user.role = new_role
+        db.commit()
+
+        updated_token_data = TokenData(email=user.email, role=new_role)
+
+        return updated_token_data    
 
     def create_email_token(self, data: dict):
         """

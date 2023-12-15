@@ -6,12 +6,11 @@ import cloudinary.uploader
 
 
 from src.database.db import get_db
-from src.database.models import User, Image
-from src.schemas import UserUpdate, UserResponse, UserRole, UserResponseProfile, UserDb
+from src.database.models import User, Image, UserRole
+from src.schemas import UserUpdate, UserResponse, UserResponseProfile, UserDb
 from src.repository import users as repository_users
 from src.services.auth import auth_service
 from src.conf.config import settings
-from src.database.crud_users import update_user_role
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -106,7 +105,15 @@ async def user_profile(username: str, db: Session = Depends(get_db)):
     
     image_count = db.query(Image).filter(Image.user_id == user.id).count()
     
-    last_image_id = db.query(Image).filter(Image.user_id == user.id).order_by(desc(Image.created_at)).first().id if image_count > 0 else None
+    last_image_id = (
+        db.query(Image)
+        .filter(Image.user_id == user.id)
+        .order_by(desc(Image.created_at))
+        .first()
+        .id
+        if image_count > 0
+        else None
+    )
 
     return {"user": user, "image_count": image_count, "last_image_id": last_image_id}
 
@@ -123,10 +130,10 @@ async def user_profile_edit(user_update: UserUpdate, current_user: User = Depend
     """
     if current_user.username != user_update.username:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    if user_update.password != current_user.password:
+    if not auth_service.verify_password(user_update.password,current_user.password):
         raise HTTPException(status_code=403, detail="Incorrect password")
     user_update.password = auth_service.get_password_hash(user_update.new_password)
-    user = repository_users.update_user(db, user_update)
+    user = await repository_users.update_user(user_id=current_user.id, body=user_update, db=db)
     return user
 
 @router.patch("/admin/ban/{user_id}", response_model=UserDb)
@@ -144,8 +151,8 @@ async def ban_user(
 
     :return: The updated user details as a UserDb object.
     """
-    # if "admin" not in current_user.role:
-    #     raise HTTPException(status_code=403, detail="Not enough permissions")
+    if "admin" not in current_user.role:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
 
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
