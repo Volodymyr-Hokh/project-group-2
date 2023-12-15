@@ -8,7 +8,7 @@ from src.database.startup import initialize_roles_on_startup
 
 from src.limiter import limiter
 
-from src.routes import auth, users, images, transformations
+from src.routes import auth, users, images, transformations, comments
 
 load_dotenv()
 
@@ -31,3 +31,4 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(images.router, prefix="/api")
 app.include_router(transformations.router, prefix="/api")
+app.include_router(comments.router, prefix="/api")

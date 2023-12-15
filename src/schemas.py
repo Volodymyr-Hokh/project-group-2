@@ -16,10 +16,12 @@ class ImageResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-class UserRole(str):  
+
+class UserRole(str):
     admin = "admin"
     moderator = "moderator"
     user = "user"
+
 
 class UserModel(BaseModel):
     username: str = Field(min_length=5, max_length=16)
@@ -44,10 +46,13 @@ class UserResponse(BaseModel):
     user: UserDb
     detail: str = "User successfully created"
 
+
 class UserResponseProfile(BaseModel):
     user: UserDb
     image_count: int = 0
     last_image_id: Optional[int] = None
+
+
 class RoleModel(BaseModel):
     name: str
 
@@ -72,3 +77,12 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr]
     password: Optional[str] = Field(min_length=6, max_length=10)
     new_password: Optional[str] = Field(min_length=6, max_length=10)
+
+
+class CommentResponse(BaseModel):
+    id: int
+    text: str
+    created_at: datetime
+    updated_at: datetime
+    user_id: int
+    image_id: int

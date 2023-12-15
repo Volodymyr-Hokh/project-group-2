@@ -22,16 +22,18 @@ image_m2m_tag = Table(
 )
 
 user_roles = Table(
-    'user_roles',
+    "user_roles",
     Base.metadata,
-    Column('user_id', Integer, ForeignKey('users.id')),
-    Column('role_id', Integer, ForeignKey('roles.id'))
+    Column("user_id", Integer, ForeignKey("users.id")),
+    Column("role_id", Integer, ForeignKey("roles.id")),
 )
 
-class UserRole(str):  
+
+class UserRole(str):
     admin = "admin"
     moderator = "moderator"
     user = "user"
+
 
 class Image(Base):
     __tablename__ = "images"
@@ -43,6 +45,7 @@ class Image(Base):
     updated_at = Column(DateTime)
     user_id = Column(Integer, ForeignKey("users.id"))
     tags = relationship("Tag", secondary=image_m2m_tag, backref="images")
+    comments = relationship("Comment", backref="images")
 
 
 class Tag(Base):
@@ -64,6 +67,7 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     image_id = Column(Integer, ForeignKey("images.id"))
 
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
@@ -76,9 +80,9 @@ class User(Base):
     refresh_token = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
 
-    
-    role = Column(String, name='user_role', default=UserRole.user, nullable=False)
-    roles = relationship('Roles', secondary=user_roles, back_populates='users')
+    role = Column(String, name="user_role", default=UserRole.user, nullable=False)
+    roles = relationship("Roles", secondary=user_roles, back_populates="users")
+
 
 class Roles(Base):
     __tablename__ = "roles"
@@ -86,4 +90,4 @@ class Roles(Base):
     name = Column(String)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
-    users = relationship('User', secondary=user_roles, back_populates='roles')
+    users = relationship("User", secondary=user_roles, back_populates="roles")

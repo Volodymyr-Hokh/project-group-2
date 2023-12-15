@@ -9,7 +9,7 @@ from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-from src.database.models import User
+from src.database.models import User, Roles, user_roles
 from src.database.db import get_db
 from src.repository import users as repository_users
 from src.conf.config import settings
@@ -93,7 +93,12 @@ class Auth:
         else:
             expire = datetime.utcnow() + timedelta(days=7)
         to_encode.update(
-            {"iat": datetime.utcnow(), "exp": expire, "scope": "refresh_token", "roles": data.get("roles", [])}
+            {
+                "iat": datetime.utcnow(),
+                "exp": expire,
+                "scope": "refresh_token",
+                "roles": data.get("roles", []),
+            }
         )
         encoded_refresh_token = jwt.encode(
             to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM
@@ -163,12 +168,13 @@ class Auth:
             self.r.expire(f"user:{email}", 900)
         else:
             user = pickle.loads(user)
-
-        user.roles = roles
         return user
 
-
-    async def get_current_user_role(self, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    async def get_current_user_role(
+        self,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+    ):
         """
         Get the roles of the current authenticated user.
 
@@ -176,9 +182,13 @@ class Auth:
 
         :return: The roles of the current authenticated user.
         """
-        roles = db.query(Roles).join(user_roles).filter(user_roles.c.user_id == current_user.id).all()
+        roles = (
+            db.query(Roles)
+            .join(user_roles)
+            .filter(user_roles.c.user_id == current_user.id)
+            .all()
+        )
         return roles
-
 
     def create_email_token(self, data: dict):
         """
