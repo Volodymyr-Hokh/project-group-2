@@ -1,17 +1,44 @@
-from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
-import cloudinary
-import cloudinary.uploader
 
 from src.database.db import get_db
 from src.database.models import User
+from src.schemas import UserUpdate, UserResponse, UserRole
 from src.repository import users as repository_users
 from src.services.auth import auth_service
-from src.conf.config import settings
-from src.schemas import UserDb, UserUpdate
-
+from src.database.crud_users import update_user_role
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+@router.put("/users/{user_id}/update-role", response_model=UserResponse)
+async def update_user_role(
+    user_id: int,
+    role_update: UserUpdate,
+    current_user: User = Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Update user role.
+
+    :param user_id: The user id.
+    :param role_update: The new role data.
+    :param current_user: The current user (admin).
+    :param db: The SQLAlchemy Session instance.
+
+    :return: The updated user.
+    """
+    # Право апдейтити роль має тільки адмін
+    if current_user.role != UserRole.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to update user roles."
+        )
+
+    # Виправлено помилку: 'updated_user' було задекларовано всередині if, тому його не було видно поза межами блока if.
+    updated_user = await update_user_role(user_id, role_update, db)
+    
+    return {"user": updated_user, "detail": "User role updated successfully"}
+
 
 
 @router.get("/me/", response_model=UserDb)
@@ -24,6 +51,7 @@ async def read_users_me(current_user: User = Depends(auth_service.get_current_us
     :return: The user details as a UserDb object.
     """
     return current_user
+
 
 
 @router.patch("/avatar", response_model=UserDb)

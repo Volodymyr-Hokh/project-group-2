@@ -13,6 +13,7 @@ from src.schemas import UserModel, UserResponse, Token, RequestEmail
 from src.repository import users as repository_users
 from src.services.auth import Auth
 from src.services.emails import send_email
+from src.database import crud_users
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
@@ -35,6 +36,10 @@ async def signup(body: UserModel, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Account already exists"
         )
+    
+    # user_count = await crud_users.get_users_count(db)
+    # role = "admin" if user_count == 0 else "user"
+
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repository_users.create_user(body, db)
     return {"user": new_user, "detail": "User successfully created"}

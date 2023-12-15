@@ -176,7 +176,7 @@ class Auth:
 
         :return: The roles of the current authenticated user.
         """
-        roles = db.query(Roles).join(user_roles).filter(user_roles.c.user_id == current_user.id).all()
+        roles = db.query(Roles).join(user_roles).filter(user_roles.c.user_id == current_user.id).first()
         return roles
 
 

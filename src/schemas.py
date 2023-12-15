@@ -69,3 +69,4 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr]
     password: Optional[str] = Field(min_length=6, max_length=10)
     new_password: Optional[str] = Field(min_length=6, max_length=10)
+    role: Optional[UserRole] 

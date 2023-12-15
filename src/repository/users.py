@@ -1,8 +1,10 @@
 from libgravatar import Gravatar
 from sqlalchemy.orm import Session
 
-from src.database.models import User
-from src.schemas import UserModel
+from src.database.models import User, UserRole, Roles
+from src.schemas import UserModel, UserRole
+from src.database.crud_users import get_users_count
+from typing import List
 
 async def get_user_by_email(email: str, db: Session) -> User:
     """
@@ -32,6 +34,7 @@ async def create_user(body: UserModel, db: Session) -> User:
 
     :param body: The user data as a UserModel object.
     :param db: The SQLAlchemy Session instance.
+    
 
     :return: The created User object.
     """
@@ -42,7 +45,13 @@ async def create_user(body: UserModel, db: Session) -> User:
     except Exception as e:
         print(e)
     
-    new_user = User(**body.dict(), avatar=avatar)
+    if not db.query(User).count():
+        roles = list(UserRole)
+    else:
+        roles = [UserRole.user]
+    
+
+    new_user = User(**body.dict(), avatar=avatar, roles=[Roles(name=role) for role in roles])
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
