@@ -74,6 +74,7 @@ class User(Base):
     created_at = Column("created_at", DateTime, default=func.now())
     avatar = Column(String(255), nullable=True)
     refresh_token = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True)
 
     
     role = Column(String, name='user_role', default=UserRole.user, nullable=False)
