@@ -147,11 +147,3 @@ async def update_user(user_id: int, body: UserModel, db: Session) -> User:
     db.commit()
     db.refresh(user)
     return user
-
-
-async def show_user(db: Session) -> User:
-    return db.query(User).filter(User.id == 2).first()
-
-
-async def show_user(db: Session) -> User:
-    return db.query(User).filter(User.id == 2).first()
