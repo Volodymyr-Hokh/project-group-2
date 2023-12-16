@@ -32,7 +32,9 @@ auth_service = Auth()
 @router.post(
     "/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
-async def signup(body: UserModel, db: Session = Depends(get_db)):
+async def signup(
+    body: UserModel, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+):
     """
     User registration.
 
@@ -52,6 +54,7 @@ async def signup(body: UserModel, db: Session = Depends(get_db)):
 
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repository_users.create_user(body, db)
+    background_tasks.add_task(send_email, user.email, user.username, request.base_url)
     return {"user": new_user, "detail": "User successfully created"}
 
 

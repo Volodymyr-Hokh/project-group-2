@@ -35,9 +35,11 @@ class UserDb(BaseModel):
     class Config:
         orm_mode = True
 
+
 class UserResponse(BaseModel):
     user: UserDb
     detail: str = "User successfully created"
+
 
 class UserResponseProfile(BaseModel):
     user: UserDb
@@ -65,7 +67,7 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr]
     password: Optional[str] = Field(min_length=6, max_length=10)
     new_password: Optional[str] = Field(min_length=6, max_length=10)
-    role: Optional[str] 
+
 
 class CommentResponse(BaseModel):
     id: int
@@ -74,4 +76,3 @@ class CommentResponse(BaseModel):
     updated_at: datetime
     user_id: int
     image_id: int
-
