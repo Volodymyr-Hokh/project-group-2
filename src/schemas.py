@@ -74,3 +74,4 @@ class CommentResponse(BaseModel):
     updated_at: datetime
     user_id: int
     image_id: int
+
