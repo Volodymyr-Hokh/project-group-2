@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException, status
 
 from src.database.db import get_db
 from src.limiter import limiter
 from src.repository import comments as comments_repository
+from src.database.models import UserRole
 from src.schemas import CommentResponse
 from src.services.auth import auth_service
 
@@ -51,6 +52,12 @@ async def edit_comment(
     :param user: Get the current authenticated user.
     :return:
     """
+    if not text.strip():
+        raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Comment text cannot be empty or contain only whitespace",
+        )
+    
     return await comments_repository.edit_comment(
         text=text, comment_id=comment_id, user=user, db=db
     )
@@ -72,6 +79,10 @@ async def delete_comment(
     :param user: Get the current authenticated user.
     :return:
     """
+    if user.role not in (UserRole.admin.value, UserRole.moderator.value):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+        detail="Only administrators and moderators can delete comments")
+    
     return await comments_repository.delete_comment(
         comment_id=comment_id, user=user, db=db
     )
