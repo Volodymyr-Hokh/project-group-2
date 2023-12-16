@@ -33,7 +33,10 @@ auth_service = Auth()
     "/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
 async def signup(
-    body: UserModel, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+    body: UserModel,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
     """
     User registration.
@@ -54,7 +57,7 @@ async def signup(
 
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repository_users.create_user(body, db)
-    background_tasks.add_task(send_email, user.email, user.username, request.base_url)
+    background_tasks.add_task(send_email, body.email, body.username, request.base_url)
     return {"user": new_user, "detail": "User successfully created"}
 
 
