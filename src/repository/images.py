@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-
+import cloudinary.uploader
 from sqlalchemy import text, and_
 from sqlalchemy.orm import Session
 
@@ -36,6 +36,7 @@ async def delete_image(image_id: int, user: User, db: Session):
         .first()
     )
     if image:
+        cloudinary.uploader.destroy(image.public_id)
         db.delete(image)
         db.commit()
     return image
