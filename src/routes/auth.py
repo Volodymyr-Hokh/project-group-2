@@ -1,6 +1,14 @@
 from typing import List
 
-from fastapi import APIRouter, HTTPException, Depends, status, Security, BackgroundTasks, Request
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Depends,
+    status,
+    Security,
+    BackgroundTasks,
+    Request,
+)
 from fastapi.security import (
     OAuth2PasswordRequestForm,
     HTTPAuthorizationCredentials,
@@ -21,11 +29,6 @@ security = HTTPBearer()
 auth_service = Auth()
 
 
-@router.get(
-        "/test", response_model=UserDb)
-async def test(db: Session = Depends(get_db)):
-    return  await repository_users.show_user(db)
-
 @router.post(
     "/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
@@ -43,10 +46,9 @@ async def signup(body: UserModel, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Account already exists"
         )
-    
-    
+
     roles = [UserRole.admin] if not db.query(User).count() else [UserRole.user]
-    role=roles[0].value
+    role = roles[0].value
 
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repository_users.create_user(body, db)
@@ -59,7 +61,7 @@ async def login(
 ):
     """
     User's authorization via JWT token.
-    
+
     :param body: OAuth2PasswordRequestForm containing username and password fields as form data.
     :param db: The SQLAlchemy Session instance.
 
@@ -69,14 +71,17 @@ async def login(
     user = await repository_users.get_user_by_email(body.username, db)
     if user is None or not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or account is blocked"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or account is blocked",
         )
     if not auth_service.verify_password(body.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password"
         )
     # Generate JWT
-    access_token = await auth_service.create_access_token(data={"sub": user.email, "role": user.role})
+    access_token = await auth_service.create_access_token(
+        data={"sub": user.email, "role": user.role}
+    )
     refresh_token = await auth_service.create_refresh_token(data={"sub": user.email})
     await repository_users.update_token(user, refresh_token, db)
     return {
@@ -104,6 +109,7 @@ async def get_current_user_roles(
     print(current_user.email)
     return current_user.role
 
+
 @router.get("/refresh_token", response_model=Token)
 async def refresh_token(
     credentials: HTTPAuthorizationCredentials = Security(security),
@@ -115,7 +121,7 @@ async def refresh_token(
     :param credentials: Security endpoind to access the token.
     :param db: The SQLAlchemy Session instance.
 
-   
+
     :return: Updated access token, refresh token and token type.
     """
     token = credentials.credentials
