@@ -14,10 +14,11 @@ from src.conf.config import settings
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-@router.put("/users/{user_id}/update-role", response_model=UserResponse)
+
+@router.put("/users/{user_id}/update_role")
 async def update_user_role(
     user_id: int,
-    role_update: UserUpdate,
+    role_update: str,
     current_user: User = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -31,17 +32,24 @@ async def update_user_role(
 
     :return: The updated user.
     """
-    # Право апдейтити роль має тільки адмін
     if current_user.role != UserRole.admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update user roles."
+            detail="You do not have permission to update user roles.",
+        )
+    if role_update not in ["admin", "user", "moderator"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The role must be admin, user or moderator.",
         )
 
-    updated_user = await update_user_role(user_id, role_update, db)
-    
-    return {"user": updated_user, "detail": "User role updated successfully"}
+    updated_user = await repository_users.update_user_role(
+        db,
+        user_id,
+        role_update,
+    )
 
+    return {"user": updated_user, "detail": "User role updated successfully"}
 
 
 @router.get("/me/", response_model=UserDb)
@@ -50,11 +58,10 @@ async def read_users_me(current_user: User = Depends(auth_service.get_current_us
     Get information about the currently authenticated user.
 
     :param current_user: The current authenticated user.
-    
+
     :return: The user details as a UserDb object.
     """
     return current_user
-
 
 
 @router.patch("/avatar", response_model=UserDb)
@@ -96,15 +103,15 @@ async def user_profile(username: str, db: Session = Depends(get_db)):
 
     :param username: The username of the user.
     :param db: The database session.
-    
+
     :return: The user details as a UserDb object.
     """
     user = repository_users.get_user_by_username(db, username)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     image_count = db.query(Image).filter(Image.user_id == user.id).count()
-    
+
     last_image_id = (
         db.query(Image)
         .filter(Image.user_id == user.id)
@@ -117,24 +124,32 @@ async def user_profile(username: str, db: Session = Depends(get_db)):
 
     return {"user": user, "image_count": image_count, "last_image_id": last_image_id}
 
+
 @router.put("/{username}/edit", response_model=UserDb)
-async def user_profile_edit(user_update: UserUpdate, current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+async def user_profile_edit(
+    user_update: UserUpdate,
+    current_user: User = Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
     """
     Edit the profile of the currently authenticated user.
 
     :param user_update: The updated user details.
     :param current_user: The current authenticated user.
     :param db: The database session.
-    
+
     :return: The updated user details as a UserDb object.
     """
     if current_user.username != user_update.username:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    if not auth_service.verify_password(user_update.password,current_user.password):
+    if not auth_service.verify_password(user_update.password, current_user.password):
         raise HTTPException(status_code=403, detail="Incorrect password")
     user_update.password = auth_service.get_password_hash(user_update.new_password)
-    user = await repository_users.update_user(user_id=current_user.id, body=user_update, db=db)
+    user = await repository_users.update_user(
+        user_id=current_user.id, body=user_update, db=db
+    )
     return user
+
 
 @router.patch("/admin/ban/{user_id}", response_model=UserDb)
 async def ban_user(

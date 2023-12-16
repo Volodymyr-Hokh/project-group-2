@@ -131,19 +131,8 @@ async def update_avatar(email, url: str, db: Session) -> User:
     return user
 
 
-async def update_user(user_id: int, body: UserModel, db: Session) -> User:
-    """
-    Update the user with the given ID.
-
-    :param user_id: The ID of the user to update.
-    :param body: The user data as a UserModel object.
-    :param db: The SQLAlchemy Session instance.
-
-    :return: The updated User object.
-    """
+async def update_user_role(db: Session, user_id: int, role: str):
     user = db.query(User).filter(User.id == user_id).first()
-    for key, value in body.dict().items():
-        setattr(user, key, value)
+    user.role = role
     db.commit()
-    db.refresh(user)
     return user
