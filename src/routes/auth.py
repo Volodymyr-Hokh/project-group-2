@@ -9,14 +9,22 @@ from fastapi.security import (
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
-from src.schemas import UserModel, UserResponse, Token, RequestEmail
+from src.database.models import User, UserRole
+from src.schemas import UserModel, UserResponse, Token, RequestEmail, UserDb
 from src.repository import users as repository_users
 from src.services.auth import Auth
 from src.services.emails import send_email
 
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
 auth_service = Auth()
+
+
+@router.get(
+        "/test", response_model=UserDb)
+async def test(db: Session = Depends(get_db)):
+    return  await repository_users.show_user(db)
 
 @router.post(
     "/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED
@@ -35,6 +43,11 @@ async def signup(body: UserModel, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Account already exists"
         )
+    
+    
+    roles = [UserRole.admin] if not db.query(User).count() else [UserRole.user]
+    role=roles[0].value
+
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repository_users.create_user(body, db)
     return {"user": new_user, "detail": "User successfully created"}
@@ -63,7 +76,7 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password"
         )
     # Generate JWT
-    access_token = await auth_service.create_access_token(data={"sub": user.email})
+    access_token = await auth_service.create_access_token(data={"sub": user.email, "role": user.role})
     refresh_token = await auth_service.create_refresh_token(data={"sub": user.email})
     await repository_users.update_token(user, refresh_token, db)
     return {
@@ -72,18 +85,24 @@ async def login(
         "token_type": "bearer",
     }
 
+
 @router.get("/current_user_roles")
-async def get_roles_of_current_user(
-    roles: list[str] = Depends(auth_service.get_current_user_role)
+async def get_current_user_roles(
+    current_user: User = Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Get the roles of the current authenticated user.
 
-    :param roles: The roles of the current authenticated user.
+    :param current_user: The current authenticated user.
+    :param db: The SQLAlchemy Session instance.
 
     :return: The roles of the current authenticated user.
     """
-    return {"roles": roles}
+    print(current_user)
+    print(current_user.role)
+    print(current_user.email)
+    return current_user.role
 
 @router.get("/refresh_token", response_model=Token)
 async def refresh_token(

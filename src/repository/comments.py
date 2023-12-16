@@ -55,4 +55,6 @@ async def get_comments_by_image_id(image_id: int, db: Session):
         .order_by(Comment.created_at.desc())
         .all()
     )
+
     return comments
+

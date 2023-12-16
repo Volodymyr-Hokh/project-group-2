@@ -1,8 +1,10 @@
 from libgravatar import Gravatar
 from sqlalchemy.orm import Session
 
-from src.database.models import User
-from src.schemas import UserModel
+from src.database.models import User, UserRole
+from src.schemas import UserModel, TokenData
+from typing import List
+
 
 async def get_user_by_email(email: str, db: Session) -> User:
     """
@@ -41,13 +43,35 @@ async def create_user(body: UserModel, db: Session) -> User:
         avatar = g.get_image()
     except Exception as e:
         print(e)
-    
-    new_user = User(**body.dict(), avatar=avatar)
+
+    if not db.query(User).count():
+        roles = [UserRole.admin]
+    else:
+        roles = [UserRole.user]
+
+    new_user = User(**body.dict(), avatar=avatar, role=roles[0].value)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    
+
     return new_user
+
+async def update_user(user_id: int, body: UserModel, db: Session) -> User:
+    """
+    Update the user with the given ID.
+
+    :param user_id: The ID of the user to update.
+    :param body: The user data as a UserModel object.
+    :param db: The SQLAlchemy Session instance.
+
+    :return: The updated User object.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    for key, value in body.model_dump().items():
+        setattr(user, key, value)
+    db.commit()
+    db.refresh(user)
+    return user
 
 async def update_token(user: User, token: str | None, db: Session) -> None:
     """
@@ -75,9 +99,6 @@ async def confirmed_email(email: str, db: Session) -> None:
     user.confirmed = True
     db.commit()
 
-async def get_user_role(db: Session, user_id:int):
-    user = db.query(User).filter(User.id == user_id).first()
-    return user.role.name if user and user.role else None
 
 async def update_avatar(email, url: str, db: Session) -> User:
     """
@@ -93,3 +114,7 @@ async def update_avatar(email, url: str, db: Session) -> User:
     user.avatar = url
     db.commit()
     return user
+
+
+async def show_user(db: Session) -> User:
+    return db.query(User).filter(User.id==2).first()
