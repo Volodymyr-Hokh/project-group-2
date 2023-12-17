@@ -66,7 +66,8 @@ class UserUpdate(BaseModel):
     username: Optional[str] = Field(min_length=5, max_length=16)
     email: Optional[EmailStr]
     password: Optional[str] = Field(min_length=6, max_length=10)
-    new_password: Optional[str] = Field(min_length=6, max_length=10)
+    is_active: Optional[bool]
+    role: Optional[str]
 
 
 class CommentResponse(BaseModel):

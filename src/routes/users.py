@@ -15,41 +15,28 @@ from src.conf.config import settings
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.put("/users/{user_id}/update_role")
-async def update_user_role(
+@router.patch("/users/{user_id}")
+async def update_user(
     user_id: int,
-    role_update: str,
+    user_update: UserUpdate,
     current_user: User = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    Update user role.
+    Update the profile of the currently authenticated user.
 
-    :param user_id: The user id.
-    :param role_update: The new role data.
-    :param current_user: The current user (admin).
-    :param db: The SQLAlchemy Session instance.
+    :param user_id: The ID of the user to update.
+    :param user_update: The updated user details.
+    :param current_user: The current authenticated user.
+    :param db: The database session.
 
-    :return: The updated user.
+    :return: The updated user details as a UserDb object.
     """
-    if current_user.role != UserRole.admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update user roles.",
-        )
-    if role_update not in ["admin", "user", "moderator"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The role must be admin, user or moderator.",
-        )
+    if "admin" not in current_user.role:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    updated_user = await repository_users.update_user_role(
-        db,
-        user_id,
-        role_update,
-    )
-
-    return {"user": updated_user, "detail": "User role updated successfully"}
+    user = await repository_users.update_user(user_id, user_update, db)
+    return user
 
 
 @router.get("/me/", response_model=UserDb)
@@ -123,57 +110,3 @@ async def user_profile(username: str, db: Session = Depends(get_db)):
     )
 
     return {"user": user, "image_count": image_count, "last_image_id": last_image_id}
-
-
-@router.put("/{username}/edit", response_model=UserDb)
-async def user_profile_edit(
-    user_update: UserUpdate,
-    current_user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db),
-):
-    """
-    Edit the profile of the currently authenticated user.
-
-    :param user_update: The updated user details.
-    :param current_user: The current authenticated user.
-    :param db: The database session.
-
-    :return: The updated user details as a UserDb object.
-    """
-    if current_user.username != user_update.username:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    if not auth_service.verify_password(user_update.password, current_user.password):
-        raise HTTPException(status_code=403, detail="Incorrect password")
-    user_update.password = auth_service.get_password_hash(user_update.new_password)
-    user = await repository_users.update_user(
-        user_id=current_user.id, body=user_update, db=db
-    )
-    return user
-
-
-@router.patch("/admin/ban/{user_id}", response_model=UserDb)
-async def ban_user(
-    user_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(auth_service.get_current_user),
-):
-    """
-    Ban a user by setting their is_active field to False.
-
-    :param user_id: The ID of the user to ban.
-    :param db: The database session.
-    :param current_user: The current authenticated user.
-
-    :return: The updated user details as a UserDb object.
-    """
-    if "admin" not in current_user.role:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user.is_active = False
-    db.commit()
-
-    return user

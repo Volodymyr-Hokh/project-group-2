@@ -97,25 +97,6 @@ async def login(
     }
 
 
-@router.get("/current_user_roles")
-async def get_current_user_roles(
-    current_user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db),
-):
-    """
-    Get the roles of the current authenticated user.
-
-    :param current_user: The current authenticated user.
-    :param db: The SQLAlchemy Session instance.
-
-    :return: The roles of the current authenticated user.
-    """
-    print(current_user)
-    print(current_user.role)
-    print(current_user.email)
-    return current_user.role
-
-
 @router.get("/refresh_token", response_model=Token)
 async def refresh_token(
     credentials: HTTPAuthorizationCredentials = Security(security),

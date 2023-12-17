@@ -76,7 +76,8 @@ async def update_user(user_id: int, body: UserModel, db: Session) -> User:
     """
     user = db.query(User).filter(User.id == user_id).first()
     for key, value in body.model_dump().items():
-        setattr(user, key, value)
+        if value is not None:
+            setattr(user, key, value)
     db.commit()
     db.refresh(user)
     return user

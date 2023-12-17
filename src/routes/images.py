@@ -4,7 +4,8 @@ from fastapi.responses import Response
 from src.database.db import get_db
 from src.limiter import limiter
 from src.repository import images as images_repository
-from src.schemas import ImageResponse
+from src.repository import comments as comments_repository
+from src.schemas import ImageResponse, CommentResponse
 from src.services.auth import auth_service
 from src.services.images import image_service
 
@@ -135,6 +136,25 @@ async def get_image(
     if not image:
         raise HTTPException(status_code=404, detail="Image not found")
     return image
+
+
+@router.get("/{image_id}/comments", response_model=list[CommentResponse])
+@limiter.limit(limit_value="10/minute")
+async def get_comments_by_image_id(
+    request: Request,
+    image_id: int,
+    db=Depends(get_db),
+    user=Depends(auth_service.get_current_user),
+):
+    """
+    Getting comments by image id.
+    :param request: FastAPI Request instance.
+    :param image_id: Image id number.
+    :param db: The SQLAlchemy Session instance.
+    :param user: Get the current authenticated user.
+    :return:
+    """
+    return await comments_repository.get_comments_by_image_id(image_id=image_id, db=db)
 
 
 @router.post("/generate_qr_code")
