@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
@@ -32,8 +32,7 @@ class UserDb(BaseModel):
     avatar: str
     role: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserResponse(BaseModel):

@@ -23,7 +23,7 @@ async def get_user_by_email(email: str, db: Session) -> User:
     return db.query(User).filter(User.email == email).first()
 
 
-def get_user_by_username(db: Session, username: str) -> User:
+async def get_user_by_username(db: Session, username: str) -> User:
     """
     Retrieves a user from the database based on the provided username.
 
@@ -58,14 +58,14 @@ async def create_user(body: UserModel, db: Session) -> User:
     except Exception as e:
         print(e)
 
-    new_user = User(**body.dict(), avatar=avatar)
+    new_user = User(**body.model_dump(), avatar=avatar)
 
     if not db.query(User).count():
         roles = [UserRole.admin]
     else:
         roles = [UserRole.user]
 
-    new_user = User(**body.dict(), avatar=avatar, role=roles[0].value)
+    new_user = User(**body.model_dump(), avatar=avatar, role=roles[0].value)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
