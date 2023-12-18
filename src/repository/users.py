@@ -11,36 +11,45 @@ from typing import List
 
 async def get_user_by_email(email: str, db: Session) -> User:
     """
-    Retrieve a user from the database based on their email.
+    Retrieves a user from the database based on the provided email.
 
-    :param email: The email address of the user to be retrieved.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        email (str): The email of the user to retrieve.\n
+        db (Session): The database session.\n
 
-    :return: The User object if found, otherwise None.
+    Returns:
+        User: The user object if found, None otherwise.
     """
     return db.query(User).filter(User.email == email).first()
 
 
 def get_user_by_username(db: Session, username: str) -> User:
     """
-    Retrieve a user from the database based on their username.
+    Retrieves a user from the database based on the provided username.
 
-    :param username: The username of the user to be retrieved.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        db (Session): The database session.\n
+        username (str): The username of the user to retrieve.\n
 
-    :return: The User object if found, otherwise None.
+    Returns:
+        User: The user object if found, None otherwise.
     """
     return db.query(User).filter(User.username == username).first()
 
 
 async def create_user(body: UserModel, db: Session) -> User:
     """
-    Create a new user and store it in the database.
+    Creates a new user in the database.
 
-    :param body: The user data as a UserModel object.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        body (UserModel): The user model containing the user's information.\n
+        db (Session): The database session.\n
 
-    :return: The created User object.
+    Returns:
+        User: The newly created user.
+
+    Raises:
+        Exception: If there is an error while retrieving the user's avatar from Gravatar.
     """
     avatar = None
     try:
@@ -66,13 +75,15 @@ async def create_user(body: UserModel, db: Session) -> User:
 
 async def update_user(user_id: int, body: UserModel, db: Session) -> User:
     """
-    Update the user with the given ID.
+    Updates a user in the database.
 
-    :param user_id: The ID of the user to update.
-    :param body: The user data as a UserModel object.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        user_id (int): The ID of the user to be updated.\n
+        body (UserModel): The updated user data.\n
+        db (Session): The database session.\n
 
-    :return: The updated User object.
+    Returns:
+        User: The updated user object.
     """
     user = db.query(User).filter(User.id == user_id).first()
     for key, value in body.model_dump().items():
@@ -85,13 +96,15 @@ async def update_user(user_id: int, body: UserModel, db: Session) -> User:
 
 async def update_token(user: User, token: str | None, db: Session) -> None:
     """
-    Update the refresh token for a given user.
+    Updates the refresh token for a user in the database.
 
-    :param user: The User object to update.
-    :param token: The new refresh token, can be None.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        user (User): The user object to update the token for.\n
+        token (str | None): The new refresh token. Pass None to remove the token.\n
+        db (Session): The database session.\n
 
-    :return: None
+    Returns:
+        None
     """
     user.refresh_token = token
     db.commit()
@@ -99,12 +112,14 @@ async def update_token(user: User, token: str | None, db: Session) -> None:
 
 async def confirmed_email(email: str, db: Session) -> None:
     """
-    Confirm the email address of a user.
+    Confirms the email address of a user.
 
-    :param email: The email address to confirm.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        email (str): The email address of the user.\n
+        db (Session): The database session.\n
 
-    :return: None
+    Returns:
+        None
     """
     user = await get_user_by_email(email, db)
     user.confirmed = True
@@ -118,22 +133,18 @@ async def get_user_role(db: Session, user_id: int):
 
 async def update_avatar(email, url: str, db: Session) -> User:
     """
-    Update the avatar URL for a user.
+    Updates the avatar URL for a user.
 
-    :param email: The email address of the user.
-    :param url: The new avatar URL.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        email (str): The email of the user.\n
+        url (str): The new avatar URL.\n
+        db (Session): The database session.\n
 
-    :return: The updated User object.
+    Returns:
+        User: The updated user object.
+
     """
     user = await get_user_by_email(email, db)
     user.avatar = url
-    db.commit()
-    return user
-
-
-async def update_user_role(db: Session, user_id: int, role: str):
-    user = db.query(User).filter(User.id == user_id).first()
-    user.role = role
     db.commit()
     return user
