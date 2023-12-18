@@ -126,11 +126,6 @@ async def confirmed_email(email: str, db: Session) -> None:
     db.commit()
 
 
-async def get_user_role(db: Session, user_id: int):
-    user = db.query(User).filter(User.id == user_id).first()
-    return user.role.name if user and user.role else None
-
-
 async def update_avatar(email, url: str, db: Session) -> User:
     """
     Updates the avatar URL for a user.
