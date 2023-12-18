@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from src.database.models import User
-from src.schemas import  TokenData
+from src.schemas import TokenData
 from src.database.db import get_db
 from src.repository import users as repository_users
 from src.conf.config import settings
@@ -29,22 +29,26 @@ class Auth:
 
     def verify_password(self, plain_password, hashed_password):
         """
-        Verify a plain password against its hashed counterpart.
+        Verifies if the plain password matches the hashed password.
 
-        :param plain_password: The plain text password to verify.
-        :param hashed_password: The hashed password to compare against.
+        Args:
+            plain_password (str): The plain password to be verified.\n
+            hashed_password (str): The hashed password to compare against.\n
 
-        :return: True if the passwords match, False otherwise.
+        Returns:
+            bool: True if the plain password matches the hashed password, False otherwise.
         """
         return self.pwd_context.verify(plain_password, hashed_password)
 
     def get_password_hash(self, password: str):
         """
-        Hash a password.
+        Returns the hashed version of the provided password.
 
-        :param password: The plain text password to hash.
+        Args:
+            password (str): The password to be hashed.
 
-        :return: The hashed password.
+        Returns:
+            str: The hashed password.
         """
         return self.pwd_context.hash(password)
 
@@ -52,12 +56,14 @@ class Auth:
         self, data: dict, expires_delta: Optional[float] = None
     ) -> str:
         """
-        Generate a new access token.
+        Creates an access token for the given data.
 
-        :param data: The data to be encoded into the token.
-        :param expires_delta: Optional expiration time in seconds.
+        Args:
+            data (dict): The data to be encoded in the access token.\n
+            expires_delta (float, optional): The expiration time in seconds for the access token. Defaults to None.\n
 
-        :return: The encoded access token.
+        Returns:
+            str: The encoded access token.
         """
         to_encode = data.copy()
         if expires_delta:
@@ -69,7 +75,7 @@ class Auth:
                 "iat": datetime.utcnow(),
                 "exp": expire,
                 "scope": "access_token",
-                "role": data.get("role"), 
+                "role": data.get("role"),
             }
         )
         encoded_access_token = jwt.encode(
@@ -81,12 +87,15 @@ class Auth:
         self, data: dict, expires_delta: Optional[float] = None
     ) -> str:
         """
-        Generate a new refresh token.
+        Creates a refresh token for the given data.
 
-        :param data: The data to be encoded into the token.
-        :param expires_delta: Optional expiration time in seconds.
+        Args:
+            data (dict): The data to be encoded in the refresh token.\n
+            expires_delta (Optional[float], optional): The expiration time in seconds. Defaults to None.\n
 
-        :return: The encoded refresh token.
+        Returns:
+            str: The encoded refresh token.
+
         """
         to_encode = data.copy()
         if expires_delta:
@@ -94,7 +103,12 @@ class Auth:
         else:
             expire = datetime.utcnow() + timedelta(days=7)
         to_encode.update(
-            {"iat": datetime.utcnow(), "exp": expire, "scope": "refresh_token", "roles": data.get("role")}
+            {
+                "iat": datetime.utcnow(),
+                "exp": expire,
+                "scope": "refresh_token",
+                "roles": data.get("role"),
+            }
         )
         encoded_refresh_token = jwt.encode(
             to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM
@@ -103,11 +117,16 @@ class Auth:
 
     async def decode_refresh_token(self, refresh_token: str):
         """
-        Decode and verify a refresh token.
+        Decodes the given refresh token and returns the email associated with it.
 
-        :param refresh_token: The refresh token to decode.
+        Args:
+            refresh_token (str): The refresh token to decode.
 
-        :return: The decoded email from the token.
+        Returns:
+            str: The email associated with the refresh token.
+
+        Raises:
+            HTTPException: If the refresh token has an invalid scope or if the credentials cannot be validated.
         """
         try:
             payload = jwt.decode(
@@ -130,12 +149,17 @@ class Auth:
         self, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
     ) -> User:
         """
-        Get the current authenticated user.
+        Retrieves the current authenticated user based on the provided token.
 
-        :param token: The access token for authentication.
-        :param db: The SQLAlchemy Session instance.
+        Args:
+            token (str): The authentication token.\n
+            db (Session): The database session.\n
 
-        :return: The current authenticated user.
+        Returns:
+            User: The current authenticated user.
+
+        Raises:
+            HTTPException: If the credentials cannot be validated.
         """
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -168,33 +192,22 @@ class Auth:
         user.role = role
         return user
 
-    # async def get_roles_of_current_user(
-    #     token: str = Depends(oauth2_scheme),
-    #     db: Session = Depends(get_db),
-    #     current_user: User = Depends(get_current_user)
-    # ):
-    #     """
-    #     Get the roles of the current authenticated user.
-
-    #     :param token: The access token for authentication.
-    #     :param db: The SQLAlchemy Session instance.
-    #     :param current_user: The current authenticated user.
-
-    #     :return: The roles of the current authenticated user.
-    #     """
-    #     return current_user.role
-
     async def update_user_role(
-        self, new_role: str, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+        self,
+        new_role: str,
+        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(get_db),
     ):
         """
-        Update the role of the current authenticated user.
+        Updates the role of a user.
 
-        :param new_role: The new role to assign to the user.
-        :param token: The access token for authentication.
-        :param db: The SQLAlchemy Session instance.
+        Args:
+            new_role (str): The new role to assign to the user.\n
+            token (str, optional): The authentication token. Defaults to Depends(oauth2_scheme).\n
+            db (Session, optional): The database session. Defaults to Depends(get_db).\n
 
-        :return: The updated TokenData object.
+        Returns:
+            TokenData: The updated token data containing the user's email and new role.
         """
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -223,46 +236,12 @@ class Auth:
         else:
             user = pickle.loads(user)
 
-        
         user.role = new_role
         db.commit()
 
         updated_token_data = TokenData(email=user.email, role=new_role)
 
-        return updated_token_data    
-
-    def create_email_token(self, data: dict):
-        """
-        Generate a token for email verification.
-
-        :param data: The data to be encoded into the token.
-
-        :return: The generated email verification token.
-        """
-        to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(days=7)
-        to_encode.update({"iat": datetime.utcnow(), "exp": expire})
-        token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
-        return token
-
-    async def get_email_from_token(self, token: str):
-        """
-        Decode and retrieve the email from an email verification token.
-
-        :param token: The email verification token.
-
-        :return: The email extracted from the token.
-        """
-        try:
-            payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
-            email = payload["sub"]
-            return email
-        except JWTError as e:
-            print(e)
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Invalid token for email verification",
-            )
+        return updated_token_data
 
 
 auth_service = Auth()

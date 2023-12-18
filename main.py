@@ -1,13 +1,24 @@
+"""
+This module contains the main FastAPI application.
+
+It sets up the FastAPI app, configures middleware, includes routers, and handles exceptions.
+
+Example:
+    To run the application, execute the following command:
+        uvicorn main:app --reload
+
+Attributes:
+    app (FastAPI): The FastAPI application instance.
+
+"""
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-
-
 from src.limiter import limiter
-
 from src.routes import auth, users, images, transformations, comments
 
 load_dotenv()
@@ -18,10 +29,6 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 origins = ["http://localhost:3000"]
 
-
-
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -29,6 +36,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(images.router, prefix="/api")
