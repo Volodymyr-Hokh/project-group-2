@@ -23,14 +23,19 @@ async def update_user(
     db: Session = Depends(get_db),
 ):
     """
-    Update the profile of the currently authenticated user.
+    Updates the user with the specified user_id.
 
-    :param user_id: The ID of the user to update.
-    :param user_update: The updated user details.
-    :param current_user: The current authenticated user.
-    :param db: The database session.
+    Args:
+        user_id (int): The ID of the user to update.\n
+        user_update (UserUpdate): The updated user data.\n
+        current_user (User, optional): The current authenticated user. Defaults to Depends(auth_service.get_current_user).\n
+        db (Session, optional): The database session. Defaults to Depends(get_db).\n
 
-    :return: The updated user details as a UserDb object.
+    Raises:
+        HTTPException: If the current user does not have sufficient permissions.
+
+    Returns:
+        User: The updated user.
     """
     if "admin" not in current_user.role:
         raise HTTPException(status_code=403, detail="Not enough permissions")
@@ -42,11 +47,14 @@ async def update_user(
 @router.get("/me/", response_model=UserDb)
 async def read_users_me(current_user: User = Depends(auth_service.get_current_user)):
     """
-    Get information about the currently authenticated user.
+    Retrieves the details of the currently authenticated user.
 
-    :param current_user: The current authenticated user.
+    Args:
+        current_user (User): The currently authenticated user.
 
-    :return: The user details as a UserDb object.
+    Returns:
+        User: The details of the currently authenticated user.
+
     """
     return current_user
 
@@ -58,13 +66,19 @@ async def update_avatar_user(
     db: Session = Depends(get_db),
 ):
     """
-    Update the avatar of the currently authenticated user.
+    Updates the avatar of the current user.
 
-    :param file: The uploaded file containing the new avatar image.
-    :param current_user: The current authenticated user.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        file (UploadFile, optional): The file containing the new avatar image. Defaults to None.\n
+        current_user (User, optional): The current authenticated user. Defaults to None.\n
+        db (Session, optional): The database session. Defaults to None.\n
 
-    :return: The updated user details as a UserDb object.
+    Returns:
+        User: The updated user object.
+
+    Raises:
+        None
+
     """
     cloudinary.config(
         cloud_name=settings.cloudinary_name,
@@ -86,12 +100,17 @@ async def update_avatar_user(
 @router.get("/{username}", response_model=UserResponseProfile)
 async def user_profile(username: str, db: Session = Depends(get_db)):
     """
-    Get information about a user by their username.
+    Retrieves the profile information of a user.
 
-    :param username: The username of the user.
-    :param db: The database session.
+    Args:
+        username (str): The username of the user.\n
+        db (Session, optional): The database session. Defaults to Depends(get_db).\n
 
-    :return: The user details as a UserDb object.
+    Returns:
+        dict: A dictionary containing the user's profile information, including the user object, the number of images associated with the user, and the ID of the last image uploaded by the user.
+
+    Raises:
+        HTTPException: If the user is not found in the database.
     """
     user = repository_users.get_user_by_username(db, username)
     if user is None:
