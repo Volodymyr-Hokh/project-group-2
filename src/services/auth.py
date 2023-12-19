@@ -243,5 +243,33 @@ class Auth:
 
         return updated_token_data
 
+    async def get_email_from_token(self, token: str):
+        """
+        Retrieves the email associated with the given token.
+
+        Args:
+            token (str): The token to decode.
+
+        Returns:
+            str: The email associated with the token.
+
+        Raises:
+            HTTPException: If the token has an invalid scope or if the credentials cannot be validated.
+        """
+        try:
+            payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
+            if payload["scope"] == "access_token":
+                email = payload["sub"]
+                return email
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid scope for token",
+            )
+        except JWTError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
+
 
 auth_service = Auth()
