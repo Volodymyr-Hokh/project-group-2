@@ -14,47 +14,49 @@ from src.conf.config import settings
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-@router.put("/users/{user_id}/update-role", response_model=UserResponse)
-async def update_user_role(
+
+@router.patch("/users/{user_id}")
+async def update_user(
     user_id: int,
-    role_update: UserUpdate,
+    user_update: UserUpdate,
     current_user: User = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    Update user role.
+    Updates the user with the specified user_id.
 
-    :param user_id: The user id.
-    :param role_update: The new role data.
-    :param current_user: The current user (admin).
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        user_id (int): The ID of the user to update.\n
+        user_update (UserUpdate): The updated user data.\n
+        current_user (User, optional): The current authenticated user. Defaults to Depends(auth_service.get_current_user).\n
+        db (Session, optional): The database session. Defaults to Depends(get_db).\n
 
-    :return: The updated user.
+    Raises:
+        HTTPException: If the current user does not have sufficient permissions.
+
+    Returns:
+        User: The updated user.
     """
-    # Право апдейтити роль має тільки адмін
-    if current_user.role != UserRole.admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update user roles."
-        )
+    if "admin" not in current_user.role:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    updated_user = await update_user_role(user_id, role_update, db)
-    
-    return {"user": updated_user, "detail": "User role updated successfully"}
-
+    user = await repository_users.update_user(user_id, user_update, db)
+    return user
 
 
 @router.get("/me/", response_model=UserDb)
 async def read_users_me(current_user: User = Depends(auth_service.get_current_user)):
     """
-    Get information about the currently authenticated user.
+    Retrieves the details of the currently authenticated user.
 
-    :param current_user: The current authenticated user.
-    
-    :return: The user details as a UserDb object.
+    Args:
+        current_user (User): The currently authenticated user.
+
+    Returns:
+        User: The details of the currently authenticated user.
+
     """
     return current_user
-
 
 
 @router.patch("/avatar", response_model=UserDb)
@@ -64,13 +66,19 @@ async def update_avatar_user(
     db: Session = Depends(get_db),
 ):
     """
-    Update the avatar of the currently authenticated user.
+    Updates the avatar of the current user.
 
-    :param file: The uploaded file containing the new avatar image.
-    :param current_user: The current authenticated user.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        file (UploadFile, optional): The file containing the new avatar image. Defaults to None.\n
+        current_user (User, optional): The current authenticated user. Defaults to None.\n
+        db (Session, optional): The database session. Defaults to None.\n
 
-    :return: The updated user details as a UserDb object.
+    Returns:
+        User: The updated user object.
+
+    Raises:
+        None
+
     """
     cloudinary.config(
         cloud_name=settings.cloudinary_name,
@@ -92,19 +100,24 @@ async def update_avatar_user(
 @router.get("/{username}", response_model=UserResponseProfile)
 async def user_profile(username: str, db: Session = Depends(get_db)):
     """
-    Get information about a user by their username.
+    Retrieves the profile information of a user.
 
-    :param username: The username of the user.
-    :param db: The database session.
-    
-    :return: The user details as a UserDb object.
+    Args:
+        username (str): The username of the user.\n
+        db (Session, optional): The database session. Defaults to Depends(get_db).\n
+
+    Returns:
+        dict: A dictionary containing the user's profile information, including the user object, the number of images associated with the user, and the ID of the last image uploaded by the user.
+
+    Raises:
+        HTTPException: If the user is not found in the database.
     """
     user = repository_users.get_user_by_username(db, username)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     image_count = db.query(Image).filter(Image.user_id == user.id).count()
-    
+
     last_image_id = (
         db.query(Image)
         .filter(Image.user_id == user.id)
@@ -116,49 +129,3 @@ async def user_profile(username: str, db: Session = Depends(get_db)):
     )
 
     return {"user": user, "image_count": image_count, "last_image_id": last_image_id}
-
-@router.put("/{username}/edit", response_model=UserDb)
-async def user_profile_edit(user_update: UserUpdate, current_user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
-    """
-    Edit the profile of the currently authenticated user.
-
-    :param user_update: The updated user details.
-    :param current_user: The current authenticated user.
-    :param db: The database session.
-    
-    :return: The updated user details as a UserDb object.
-    """
-    if current_user.username != user_update.username:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    if not auth_service.verify_password(user_update.password,current_user.password):
-        raise HTTPException(status_code=403, detail="Incorrect password")
-    user_update.password = auth_service.get_password_hash(user_update.new_password)
-    user = await repository_users.update_user(user_id=current_user.id, body=user_update, db=db)
-    return user
-
-@router.patch("/admin/ban/{user_id}", response_model=UserDb)
-async def ban_user(
-    user_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(auth_service.get_current_user),
-):
-    """
-    Ban a user by setting their is_active field to False.
-
-    :param user_id: The ID of the user to ban.
-    :param db: The database session.
-    :param current_user: The current authenticated user.
-
-    :return: The updated user details as a UserDb object.
-    """
-    if "admin" not in current_user.role:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user.is_active = False
-    db.commit()
-
-    return user

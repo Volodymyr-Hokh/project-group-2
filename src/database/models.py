@@ -34,6 +34,7 @@ class Image(Base):
     tags = relationship("Tag", secondary=image_m2m_tag, backref="images")
     comments = relationship("Comment", backref="images")
 
+
 class Tag(Base):
     __tablename__ = "tags"
     id = Column(Integer, primary_key=True)
@@ -53,6 +54,7 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     image_id = Column(Integer, ForeignKey("images.id"))
 
+
 class UserRole(str, Enum):
     admin = "admin"
     user = "user"
@@ -70,5 +72,4 @@ class User(Base):
     avatar = Column(String(255), nullable=True)
     refresh_token = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
-    role = Column(String, default='user')
-    
+    role = Column(String, default="user")

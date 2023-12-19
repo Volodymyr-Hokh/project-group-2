@@ -4,7 +4,8 @@ from fastapi.responses import Response
 from src.database.db import get_db
 from src.limiter import limiter
 from src.repository import images as images_repository
-from src.schemas import ImageResponse
+from src.repository import comments as comments_repository
+from src.schemas import ImageResponse, CommentResponse
 from src.services.auth import auth_service
 from src.services.images import image_service
 
@@ -21,15 +22,20 @@ async def add_image(
     user=Depends(auth_service.get_current_user),
 ):
     """
-    Adding image to db.
+    Uploads an image and adds it to the database.
 
-    :param request: FastAPI Request instance.
-    :param file: A file uploaded in a request.
-    :param description: Image description.
-    :param db: The SQLAlchemy Session instance.
-    :param user: Get the current authenticated user.
+    Args:
+        request (Request): The incoming request object.\n
+        file (UploadFile): The image file to be uploaded.\n
+        description (str, optional): The description of the image. Defaults to "".\n
+        db: The database connection dependency.\n
+        user: The current user dependency.\n
 
-    :return:
+    Returns:
+        dict: The added image information.
+
+    Raises:
+        HTTPException: If there is an error uploading the image or adding it to the database.
     """
     image_info = await image_service.upload_image(file=file)
     return await images_repository.add_image(
@@ -50,15 +56,19 @@ async def delete_image(
     user=Depends(auth_service.get_current_user),
 ):
     """
-    Deleting users image.
+    Deletes an image from the database.
 
-    :param request: FastAPI Request instance.
-    :param image_id: Image id number.
-    :param db: The SQLAlchemy Session instance.
-    :param user: Get the current authenticated user.
+    Args:
+        request (Request): The incoming request object.\n
+        image_id (int): The ID of the image to be deleted.\n
+        db: The database dependency.\n
+        user: The current user dependency.\n
 
+    Returns:
+        The deleted image.
 
-    :return:  A message confirming or rejecting delete.
+    Raises:
+        HTTPException: If the image is not found.
     """
     image = await images_repository.delete_image(image_id=image_id, user=user, db=db)
     if not image:
@@ -76,15 +86,20 @@ async def edit_description(
     user=Depends(auth_service.get_current_user),
 ):
     """
-    Edit picture description.
+    Edits the description of an image.
 
-    :param request: FastAPI Request instance.
-    :param image_id: Image id number.
-    :param description: Image description.
-    :param db: The SQLAlchemy Session instance.
-    :param user: Get the current authenticated user.
+    Args:
+        request (Request): The HTTP request object.\n
+        image_id (int): The ID of the image to edit.\n
+        description (str): The new description for the image.\n
+        db: The database dependency.\n
+        user: The current user dependency.\n
 
-    :return: The updated description details as a UserDb object.
+    Returns:
+        The edited image.
+
+    Raises:
+        HTTPException: If the image is not found.
     """
     image = await images_repository.edit_description(
         image_id=image_id, description=description, user=user, db=db
@@ -102,13 +117,15 @@ async def get_images(
     user=Depends(auth_service.get_current_user),
 ):
     """
-    Gets images by users_id.
+    Retrieves images for the current user.
 
-    :param request: FastAPI Request instance.
-    :param db: The SQLAlchemy Session instance.
-    :param user: Get the current authenticated user.
+    Args:
+        request (Request): The incoming request object.\n
+        db: The database dependency.\n
+        user: The current user dependency.\n
 
-    :return: Images by users_id as a UserDb object.
+    Returns:
+        List[Image]: A list of images belonging to the current user.
     """
     return await images_repository.get_images(user=user, db=db)
 
@@ -122,14 +139,19 @@ async def get_image(
     user=Depends(auth_service.get_current_user),
 ):
     """
-    Get image by user_id and image_id.
+    Retrieves an image with the specified image_id.
 
-    :param request: FastAPI Request instance.
-    :param image_id: Image id number.
-    :param db: The SQLAlchemy Session instance.
-    :param user: Get the current authenticated user.
+    Args:
+        request (Request): The incoming request object.\n
+        image_id (int): The ID of the image to retrieve.\n
+        db: The database dependency.\n
+        user: The user dependency.\n
 
-    :return: Gets image by user_id and image_id as a ImageDb object.
+    Returns:
+        The retrieved image.
+
+    Raises:
+        HTTPException: If the image is not found.
     """
     image = await images_repository.get_image(image_id=image_id, user=user, db=db)
     if not image:
@@ -137,12 +159,44 @@ async def get_image(
     return image
 
 
+@router.get("/{image_id}/comments", response_model=list[CommentResponse])
+@limiter.limit(limit_value="10/minute")
+async def get_comments_by_image_id(
+    request: Request,
+    image_id: int,
+    db=Depends(get_db),
+    user=Depends(auth_service.get_current_user),
+):
+    """
+    Retrieves comments for a specific image by its ID.
+
+    Args:
+        request (Request): The incoming request object.\n
+        image_id (int): The ID of the image.\n
+        db: The database dependency.\n
+        user: The current user dependency.\n
+
+    Returns:
+        List[Comment]: A list of comments associated with the image.
+    """
+    return await comments_repository.get_comments_by_image_id(image_id=image_id, db=db)
+
+
 @router.post("/generate_qr_code")
 @limiter.limit(limit_value="10/minute")
 async def generate_qr_code(
     image_url: str, request: Request, user=Depends(auth_service.get_current_user)
 ):
-    """ """
+    """Generates a QR code for the given image URL.
+
+    Args:
+        image_url (str): The URL of the image to generate the QR code for.\n
+        request (Request): The incoming request object.\n
+        user: The current user (optional).\n
+
+    Returns:
+        Response: The response containing the generated QR code as content.
+    """
     if user:
         qr_code = await image_service.generate_qr_code(image_url=image_url)
         return Response(

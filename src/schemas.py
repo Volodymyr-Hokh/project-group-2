@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
@@ -32,8 +32,7 @@ class UserDb(BaseModel):
     avatar: str
     role: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserResponse(BaseModel):
@@ -66,7 +65,8 @@ class UserUpdate(BaseModel):
     username: Optional[str] = Field(min_length=5, max_length=16)
     email: Optional[EmailStr]
     password: Optional[str] = Field(min_length=6, max_length=10)
-    new_password: Optional[str] = Field(min_length=6, max_length=10)
+    is_active: Optional[bool]
+    role: Optional[str]
 
 
 class CommentResponse(BaseModel):

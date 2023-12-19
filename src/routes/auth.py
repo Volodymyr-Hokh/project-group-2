@@ -39,12 +39,20 @@ async def signup(
     db: Session = Depends(get_db),
 ):
     """
-    User registration.
+    Creates a new user account.
 
-    :param body: UserModel containing username, email and password.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        body (UserModel): The user data for creating a new account.\n
+        background_tasks (BackgroundTasks): The background tasks manager.\n
+        request (Request): The HTTP request object.\n
+        db (Session, optional): The database session. Defaults to Depends(get_db).\n
 
-    :return: A message confirming or rejecting user's registration.
+    Returns:
+        dict: A dictionary containing the newly created user and a success message.
+
+    Raises:
+        HTTPException: If an account with the same email already exists.
+
     """
     exist_user = await repository_users.get_user_by_email(body.email, db)
     if exist_user:
@@ -66,13 +74,14 @@ async def login(
     body: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
     """
-    User's authorization via JWT token.
+    Logs in a user and returns access and refresh tokens.
 
-    :param body: OAuth2PasswordRequestForm containing username and password fields as form data.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        body (OAuth2PasswordRequestForm): The request body containing the username and password.\n
+        db (Session): The database session.\n
 
-
-    :return: Generated access token, refresh token and token type.
+    Returns:
+        dict: A dictionary containing the access token, refresh token, and token type.
     """
     user = await repository_users.get_user_by_email(body.username, db)
     if user is None or not user.is_active:
@@ -84,7 +93,6 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password"
         )
-    # Generate JWT
     access_token = await auth_service.create_access_token(
         data={"sub": user.email, "role": user.role}
     )
@@ -97,38 +105,23 @@ async def login(
     }
 
 
-@router.get("/current_user_roles")
-async def get_current_user_roles(
-    current_user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db),
-):
-    """
-    Get the roles of the current authenticated user.
-
-    :param current_user: The current authenticated user.
-    :param db: The SQLAlchemy Session instance.
-
-    :return: The roles of the current authenticated user.
-    """
-    print(current_user)
-    print(current_user.role)
-    print(current_user.email)
-    return current_user.role
-
-
 @router.get("/refresh_token", response_model=Token)
 async def refresh_token(
     credentials: HTTPAuthorizationCredentials = Security(security),
     db: Session = Depends(get_db),
 ):
     """
-    Refreshing token.
+    Refreshes the access token and generates a new refresh token for the authenticated user.
 
-    :param credentials: Security endpoind to access the token.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        credentials (HTTPAuthorizationCredentials): The HTTP authorization credentials containing the refresh token.\n
+        db (Session): The database session.\n
 
+    Returns:
+        dict: A dictionary containing the new access token, refresh token, and token type.
 
-    :return: Updated access token, refresh token and token type.
+    Raises:
+        HTTPException: If the provided refresh token is invalid.
     """
     token = credentials.credentials
     email = await auth_service.decode_refresh_token(token)
@@ -152,12 +145,17 @@ async def refresh_token(
 @router.get("/confirmed_email/{token}")
 async def confirmed_email(token: str, db: Session = Depends(get_db)):
     """
-    Confirm user's email using the confirmation token.
+    Confirms the email associated with the given token.
 
-    :param token: The confirmation token sent via email.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        token (str): The token used for email verification.\n
+        db (Session, optional): The database session. Defaults to Depends(get_db).\n
 
-    :return: A message confirming or rejecting the email confirmation.
+    Returns:
+        dict: A dictionary containing a message indicating the status of the email confirmation.
+
+    Raises:
+        HTTPException: If the user is not found or if the email is already confirmed.
     """
     email = await auth_service.get_email_from_token(token)
     user = await repository_users.get_user_by_email(email, db)
@@ -179,14 +177,16 @@ async def request_email(
     db: Session = Depends(get_db),
 ):
     """
-    Send a confirmation email for email verification or re-send the confirmation email.
+    Sends a confirmation email to the user's email address.
 
-    :param body: RequestEmail containing the email address.
-    :param background_tasks: BackgroundTasks instance for handling asynchronous tasks.
-    :param request: FastAPI Request instance.
-    :param db: The SQLAlchemy Session instance.
+    Args:
+        body (RequestEmail): The request body containing the user's email.\n
+        background_tasks (BackgroundTasks): The background tasks manager.\n
+        request (Request): The HTTP request object.\n
+        db (Session, optional): The database session. Defaults to Depends(get_db).\n
 
-    :return: A message instructing the user to check their email for confirmation.
+    Returns:
+        dict: A dictionary containing the message indicating the status of the email confirmation request.
     """
     user = await repository_users.get_user_by_email(body.email, db)
 
