@@ -38,7 +38,9 @@ async def send_email(email: EmailStr, username: str, host: str):
 
     """
     try:
-        token_verification = auth_service.create_email_token({"sub": email})
+        token_verification = auth_service.create_email_token(
+            {"sub": email, "scope": "email_verification"}
+        )
         message = MessageSchema(
             subject="Confirm your email",
             recipients=[email],

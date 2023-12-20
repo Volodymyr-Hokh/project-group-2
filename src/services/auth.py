@@ -258,7 +258,7 @@ class Auth:
         """
         try:
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
-            if payload["scope"] == "access_token":
+            if payload["scope"] in ("access_token", "email_verification"):
                 email = payload["sub"]
                 return email
             raise HTTPException(
