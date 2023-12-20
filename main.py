@@ -36,7 +36,7 @@ app.mount(
     "/_static", StaticFiles(directory="./docs/_build/html/_static/"), name="_static"
 )
 
-origins = ["http://localhost:3000"]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
