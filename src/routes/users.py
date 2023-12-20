@@ -112,11 +112,12 @@ async def user_profile(username: str, db: Session = Depends(get_db)):
     Raises:
         HTTPException: If the user is not found in the database.
     """
-    user = repository_users.get_user_by_username(db, username)
+    user = await repository_users.get_user_by_username(db, username)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    image_count = db.query(Image).filter(Image.user_id == user.id).count()
+    images = db.query(Image).filter(Image.user_id == user.id).all()
+    image_count = len(images)
 
     last_image_id = (
         db.query(Image)
