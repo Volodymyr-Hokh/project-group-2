@@ -12,9 +12,13 @@ Attributes:
 
 """
 
+from pathlib import Path
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -23,11 +27,16 @@ from src.routes import auth, users, images, transformations, comments
 
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI(
+    docs_url="/swagger",
+)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.mount(
+    "/_static", StaticFiles(directory="./docs/_build/html/_static/"), name="_static"
+)
 
-origins = ["http://localhost:3000"]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,6 +45,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/docs", include_in_schema=False)
+async def get_documentation():
+    """
+    Retrieves the documentation.
+
+    Returns:
+        FileResponse: The Swagger documentation.
+
+    """
+    return FileResponse(Path("./docs/_build/html/index.html"), media_type="text/html")
+
+
+@app.get("/view-source", include_in_schema=False)
+async def view_source():
+    source_file_path = Path("./docs/_build/html/_sources/index.rst.txt")
+    return FileResponse(source_file_path)
+
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
