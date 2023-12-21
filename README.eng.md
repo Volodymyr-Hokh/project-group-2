@@ -88,8 +88,9 @@ python -m pytest tests/filename -v
 
 ## :purple_circle: Swagger and Sphinx Documentation
 
-[Swagger](https://photo-app-of9h.onrender.com/swagger)
-[Sphinx](https://photo-app-of9h.onrender.com/docs)
+* [Swagger](https://photo-app-of9h.onrender.com/swagger)
+
+* [Sphinx](https://photo-app-of9h.onrender.com/docs)
 
 ## :purple_circle: Project Authors
 

@@ -83,8 +83,8 @@ python -m pytest tests/назва_файлу -v
 ```
 ## :purple_circle: Swagger та Sphinx документація
 
-[Swagger](https://photo-app-of9h.onrender.com/swagger)
-[Sphinx](https://photo-app-of9h.onrender.com/docs)
+* [Swagger](https://photo-app-of9h.onrender.com/swagger)
+* [Sphinx](https://photo-app-of9h.onrender.com/docs)
 
 ##  :purple_circle: **Автори проекту** 
 
