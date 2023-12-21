@@ -2,10 +2,10 @@
 
 README доступно такими мовами:
 
-        <a href="https://github.com/Volodymyr-Hokh/project-group-2/blob/dev/README.md">
-        <img src="https://em-content.zobj.net/thumbs/120/apple/354/flag-ukraine_1f1fa-1f1e6.png" alt="UA" width="40" height="40"></a>
-        <a href="https://github.com/Volodymyr-Hokh/project-group-2/blob/dev/README.eng.md">
-        <img src="https://em-content.zobj.net/thumbs/120/apple/354/flag-united-states_1f1fa-1f1f8.png" alt="EN" width="40" height="40"></a>
+<a href="https://github.com/Volodymyr-Hokh/project-group-2/blob/dev/README.md">
+<img src="https://em-content.zobj.net/thumbs/120/apple/354/flag-ukraine_1f1fa-1f1e6.png" alt="UA" width="40" height="40"></a>
+<a href="https://github.com/Volodymyr-Hokh/project-group-2/blob/dev/README.eng.md">
+<img src="https://em-content.zobj.net/thumbs/120/apple/354/flag-united-states_1f1fa-1f1f8.png" alt="EN" width="40" height="40"></a>
         
 
 ## :purple_circle: **Огляд**
