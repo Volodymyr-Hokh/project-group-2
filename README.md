@@ -2,11 +2,11 @@
 
 ## :purple_circle: **Огляд**
 
-**Це груповий проект застосунку "*" для REST API, основний функціонал якого виконаний на FAST API.**
+**Це груповий проект застосунку *PhotoShare* для REST API, основний функціонал якого виконаний на FAST API.**
 
 Застосунок покритий модульними тестами більш ніж на 90%.
 
-Деплой застосунку виконаний за домогою хмарного сервісу - * "*" *
+Деплой застосунку виконаний за домогою хмарного сервісу - * Render *
 Проект має повну Swagger документацію.
 
 ## :purple_circle: **Основний функціонал**
@@ -73,9 +73,10 @@ docker-compose up -d
 ```
 python -m pytest tests/назва_файлу -v
 ```
-## Swagger та Sphinx документація
+## :purple_circle: Swagger та Sphinx документація
 
-http://127.0.0.1:8000/docs
+[Swagger]([https://github.com/Volodymyr-Hokh](https://photo-app-of9h.onrender.com/swagger)
+[Sphinx]([https://github.com/Volodymyr-Hokh](https://photo-app-of9h.onrender.com/docs)
 
 ##  :purple_circle: **Автори проекту** 
 
