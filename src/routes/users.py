@@ -15,7 +15,7 @@ from src.conf.config import settings
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.patch("/users/{user_id}")
+@router.patch("/{user_id}")
 async def update_user(
     user_id: int,
     user_update: UserUpdate,

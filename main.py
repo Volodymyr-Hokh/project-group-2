@@ -24,6 +24,7 @@ from slowapi.errors import RateLimitExceeded
 
 from src.limiter import limiter
 from src.routes import auth, users, images, transformations, comments
+from src.views import test
 
 load_dotenv()
 
@@ -70,3 +71,5 @@ app.include_router(users.router, prefix="/api")
 app.include_router(images.router, prefix="/api")
 app.include_router(transformations.router, prefix="/api")
 app.include_router(comments.router, prefix="/api")
+
+app.include_router(test.router)
