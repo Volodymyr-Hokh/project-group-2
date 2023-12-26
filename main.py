@@ -36,6 +36,11 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.mount(
     "/_static", StaticFiles(directory="./docs/_build/html/_static/"), name="_static"
 )
+app.mount(
+    "/static",
+    StaticFiles(directory="./src/services/templates/Client/static"),
+    name="static",
+)
 
 origins = ["*"]
 

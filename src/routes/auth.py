@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import (
     APIRouter,
+    Form,
     HTTPException,
     Depends,
     status,
@@ -14,6 +15,7 @@ from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
 )
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
@@ -33,27 +35,36 @@ auth_service = Auth()
     "/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
 async def signup(
-    body: UserModel,
     background_tasks: BackgroundTasks,
     request: Request,
+    username: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
     db: Session = Depends(get_db),
 ):
     """
     Creates a new user account.
 
     Args:
-        body (UserModel): The user data for creating a new account.\n
         background_tasks (BackgroundTasks): The background tasks manager.\n
-        request (Request): The HTTP request object.\n
-        db (Session, optional): The database session. Defaults to Depends(get_db).\n
+        request (Request): The incoming request object.\n
+        username (str): The username of the user.\n
+        email (str): The email address of the user.\n
+        password (str): The password of the user.\n
+        db (Session): The database session.\n
 
     Returns:
         dict: A dictionary containing the newly created user and a success message.
 
     Raises:
-        HTTPException: If an account with the same email already exists.
+        HTTPException: If there is an error creating the user account.
 
     """
+    try:
+        body = UserModel(username=username, email=email, password=password)
+    except ValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.errors())
+
     exist_user = await repository_users.get_user_by_email(body.email, db)
     if exist_user:
         raise HTTPException(
@@ -71,7 +82,8 @@ async def signup(
 
 @router.post("/login", response_model=Token)
 async def login(
-    body: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+    body: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
 ):
     """
     Logs in a user and returns access and refresh tokens.
