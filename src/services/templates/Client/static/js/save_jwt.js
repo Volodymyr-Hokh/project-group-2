@@ -9,7 +9,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
     })
         .then(response => response.json())
         .then(data => {
-            console.log(data);
+            console.log(data.json);
             const jwtToken = data.access_token;
             localStorage.setItem('token', jwtToken);
             window.location.href = '/';

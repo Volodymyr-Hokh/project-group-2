@@ -1,5 +1,4 @@
-from pydantic import ConfigDict
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -21,7 +20,9 @@ class Settings(BaseSettings):
     cloudinary_api_key: str = "your_cloudinary_api_key"
     cloudinary_api_secret: str = "your_cloudinary_api_secret"
 
-    model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8", extra="allow")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="allow"
+    )
 
 
 settings = Settings()

@@ -17,6 +17,7 @@ async def test(
     request: Request,
     user=Depends(auth_service.get_current_user),
 ):
+    # user = None
     return templates.TemplateResponse(
         "index.html",
         {"request": request, "name": user.username if user else "Not a user"},
